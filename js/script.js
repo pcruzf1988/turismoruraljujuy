@@ -159,6 +159,41 @@ function renderizarEmprendimientos() {
     });
 }
 
+// Función para convertir URL de Google Drive a enlace directo
+function convertirGoogleDriveURL(url) {
+    if (!url || !url.includes('drive.google.com')) {
+        return url;
+    }
+    
+    // Extraer el ID del archivo
+    let fileId = null;
+    
+    // Formato: /file/d/ID/
+    let match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (match) {
+        fileId = match[1];
+    }
+    
+    // Formato: /d/ID
+    if (!fileId) {
+        match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) fileId = match[1];
+    }
+    
+    // Formato: id=ID
+    if (!fileId) {
+        match = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+        if (match) fileId = match[1];
+    }
+    
+    if (fileId) {
+        // Usar thumbnail para mejor compatibilidad
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+    }
+    
+    return url;
+}
+
 // Función para crear una card de emprendimiento
 function crearCard(emp) {
     const card = document.createElement('div');
@@ -170,11 +205,22 @@ function crearCard(emp) {
     const email = emp['Correo electrónico'];
     const comunidad = emp['Comunidad / Pueblo'];
     
+    // Usar imagen real si existe, sino placeholder
+    let imagenUrl = '';
+    if (emp.Imagen && emp.Imagen.trim()) {
+        imagenUrl = convertirGoogleDriveURL(emp.Imagen.trim());
+        console.log(`📸 ${emp.Emprendimiento}:`, emp.Imagen, '→', imagenUrl);
+    } else {
+        imagenUrl = `https://picsum.photos/400/200?random=${Math.random()}`;
+        console.log(`📸 ${emp.Emprendimiento}: Sin imagen, usando placeholder`);
+    }
+    
     card.innerHTML = `
         <img 
-            src="https://via.placeholder.com/400x200/DEB887/8B4513?text=${encodeURIComponent(emp.Emprendimiento)}" 
+            src="${imagenUrl}" 
             alt="${emp.Emprendimiento}"
             class="emprendimiento-card__image"
+            onerror="this.src='https://picsum.photos/400/200?random=${Math.random()}'"
         >
         <div class="emprendimiento-card__content">
             <div class="emprendimiento-card__header">
