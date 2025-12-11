@@ -494,3 +494,306 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+// Modal
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    
+    &.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    &__overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.3s ease;
+    }
+    
+    &__container {
+        position: relative;
+        width: 90%;
+        max-width: 900px;
+        max-height: 90vh;
+        background: $white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+        z-index: 1001;
+    }
+    
+    &__close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        @include transition;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        
+        svg {
+            color: $primary;
+        }
+        
+        &:hover {
+            background: $white;
+            transform: rotate(90deg);
+        }
+    }
+    
+    &__content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    &__gallery {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        background: $light-brown;
+        overflow: hidden;
+        
+        @media (max-width: 768px) {
+            height: 250px;
+        }
+    }
+    
+    &__gallery-track {
+        display: flex;
+        height: 100%;
+        transition: transform 0.5s ease;
+    }
+    
+    &__gallery-image {
+        min-width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    &__gallery-nav {
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    
+    &__gallery-btn {
+        width: 50px;
+        height: 50px;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        cursor: pointer;
+        pointer-events: all;
+        @include transition;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        svg {
+            color: $primary;
+        }
+        
+        &:hover {
+            background: $white;
+            transform: scale(1.1);
+        }
+        
+        &:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+    }
+    
+    &__gallery-dots {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+    }
+    
+    &__gallery-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        border: none;
+        cursor: pointer;
+        @include transition;
+        
+        &.active {
+            background: $white;
+            transform: scale(1.3);
+        }
+    }
+    
+    &__info {
+        padding: 30px;
+        
+        @media (max-width: 768px) {
+            padding: 20px;
+        }
+    }
+    
+    &__header {
+        margin-bottom: 20px;
+    }
+    
+    &__title {
+        font-size: 2rem;
+        color: $primary;
+        margin-bottom: 15px;
+        line-height: 1.2;
+        
+        @media (max-width: 768px) {
+            font-size: 1.5rem;
+        }
+    }
+    
+    &__tags {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    &__tag {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        
+        &--region {
+            background: rgba($green, 0.15);
+            color: color.adjust($green, $lightness: -10%);
+        }
+        
+        &--rubro {
+            background: rgba($secondary, 0.15);
+            color: color.adjust($secondary, $lightness: -10%);
+        }
+    }
+    
+    &__location {
+        font-size: 1rem;
+        color: #666;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        
+        &::before {
+            content: '📍';
+        }
+    }
+    
+    &__section {
+        margin-bottom: 25px;
+        
+        &-title {
+            font-size: 1.2rem;
+            color: $primary;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        &-content {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+    }
+    
+    &__contacts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    &__contact-btn {
+        padding: 12px 20px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 600;
+        color: $white;
+        @include transition;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        &--whatsapp {
+            background: #25D366;
+            &:hover { background: color.adjust(#25D366, $lightness: -10%); }
+        }
+        
+        &--instagram {
+            background: #E4405F;
+            &:hover { background: color.adjust(#E4405F, $lightness: -10%); }
+        }
+        
+        &--facebook {
+            background: #1877F2;
+            &:hover { background: color.adjust(#1877F2, $lightness: -10%); }
+        }
+        
+        &--email {
+            background: $accent;
+            &:hover { background: color.adjust($accent, $lightness: -10%); }
+        }
+        
+        &--web {
+            background: $green;
+            &:hover { background: color.adjust($green, $lightness: -10%); }
+        }
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Hacer clickeable la card
+.emprendimiento-card {
+    cursor: pointer;
+    
+    &:active {
+        transform: translateY(-4px);
+    }
+}

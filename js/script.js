@@ -242,6 +242,7 @@ function crearCard(emp) {
                             href="https://wa.me/${telefono}" 
                             target="_blank"
                             class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--whatsapp"
+                            onclick="event.stopPropagation()"
                         >
                             WhatsApp
                         </a>
@@ -252,6 +253,7 @@ function crearCard(emp) {
                             href="https://instagram.com/${instagram}" 
                             target="_blank"
                             class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--instagram"
+                            onclick="event.stopPropagation()"
                         >
                             Instagram
                         </a>
@@ -262,6 +264,7 @@ function crearCard(emp) {
                             href="https://facebook.com/${facebook}" 
                             target="_blank"
                             class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--facebook"
+                            onclick="event.stopPropagation()"
                         >
                             Facebook
                         </a>
@@ -271,6 +274,7 @@ function crearCard(emp) {
                         <a 
                             href="mailto:${email}" 
                             class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--email"
+                            onclick="event.stopPropagation()"
                         >
                             Email
                         </a>
@@ -279,6 +283,11 @@ function crearCard(emp) {
             </div>
         </div>
     `;
+    
+    // Agregar evento click para abrir modal
+    card.addEventListener('click', () => {
+        abrirModal(emp);
+    });
     
     return card;
 }
@@ -357,6 +366,200 @@ searchInput.addEventListener('input', aplicarFiltros);
 regionFilter.addEventListener('change', aplicarFiltros);
 rubroFilter.addEventListener('change', aplicarFiltros);
 clearFiltersBtn.addEventListener('click', limpiarFiltros);
+
+// Modal
+const modal = document.getElementById('modalEmprendimiento');
+const modalClose = document.getElementById('modalClose');
+const modalContent = document.getElementById('modalContent');
+let currentSlide = 0;
+
+// Abrir modal
+function abrirModal(emprendimiento) {
+    currentSlide = 0;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Crear contenido del modal
+    const telefono = emprendimiento['Teléfono( sin guiones ni espacios: 5493884123456)'];
+    const instagram = emprendimiento['Instagram (solo el usuario, sin @)'];
+    const facebook = emprendimiento['Facebook (solo el nombre de usuario)'];
+    const email = emprendimiento['Correo electrónico'];
+    const web = emprendimiento['Web'];
+    const comunidad = emprendimiento['Comunidad / Pueblo'];
+    const infoAtencion = emprendimiento['Info / Atención / Condiciones de reserva'];
+    
+    // Recopilar todas las imágenes disponibles
+    const imagenes = [
+        emprendimiento.Imagen,
+        emprendimiento.Imagen2,
+        emprendimiento.Imagen3,
+        emprendimiento.Imagen4
+    ].filter(img => img && img.trim()).map(img => convertirGoogleDriveURL(img.trim()));
+    
+    // Si no hay imágenes, usar placeholder
+    if (imagenes.length === 0) {
+        imagenes.push(`https://picsum.photos/800/400?random=${Math.random()}`);
+    }
+    
+    modalContent.innerHTML = `
+        <!-- Galería de imágenes -->
+        <div class="modal__gallery">
+            <div class="modal__gallery-track" id="galleryTrack">
+                ${imagenes.map(img => `
+                    <img 
+                        src="${img}" 
+                        alt="${emprendimiento.Emprendimiento}"
+                        class="modal__gallery-image"
+                        onerror="this.src='https://picsum.photos/800/400?random=${Math.random()}'"
+                    >
+                `).join('')}
+            </div>
+            
+            ${imagenes.length > 1 ? `
+                <div class="modal__gallery-nav">
+                    <button class="modal__gallery-btn" id="prevBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <button class="modal__gallery-btn" id="nextBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="modal__gallery-dots">
+                    ${imagenes.map((_, index) => `
+                        <button class="modal__gallery-dot ${index === 0 ? 'active' : ''}" data-slide="${index}"></button>
+                    `).join('')}
+                </div>
+            ` : ''}
+        </div>
+        
+        <!-- Información -->
+        <div class="modal__info">
+            <div class="modal__header">
+                <h2 class="modal__title">${emprendimiento.Emprendimiento}</h2>
+                <div class="modal__tags">
+                    ${emprendimiento.Región ? `<span class="modal__tag modal__tag--region">${emprendimiento.Región}</span>` : ''}
+                    ${emprendimiento.Rubro ? `<span class="modal__tag modal__tag--rubro">${emprendimiento.Rubro}</span>` : ''}
+                </div>
+                ${comunidad ? `<p class="modal__location">${comunidad}</p>` : ''}
+            </div>
+            
+            ${emprendimiento.Descripción ? `
+                <div class="modal__section">
+                    <h3 class="modal__section-title">Descripción</h3>
+                    <p class="modal__section-content">${emprendimiento.Descripción}</p>
+                </div>
+            ` : ''}
+            
+            ${infoAtencion ? `
+                <div class="modal__section">
+                    <h3 class="modal__section-title">Información y Condiciones</h3>
+                    <p class="modal__section-content">${infoAtencion}</p>
+                </div>
+            ` : ''}
+            
+            <!-- Botones de contacto -->
+            <div class="modal__contacts">
+                ${telefono ? `
+                    <a href="https://wa.me/${telefono}" target="_blank" class="modal__contact-btn modal__contact-btn--whatsapp">
+                        WhatsApp
+                    </a>
+                ` : ''}
+                
+                ${instagram ? `
+                    <a href="https://instagram.com/${instagram}" target="_blank" class="modal__contact-btn modal__contact-btn--instagram">
+                        Instagram
+                    </a>
+                ` : ''}
+                
+                ${facebook ? `
+                    <a href="https://facebook.com/${facebook}" target="_blank" class="modal__contact-btn modal__contact-btn--facebook">
+                        Facebook
+                    </a>
+                ` : ''}
+                
+                ${email ? `
+                    <a href="mailto:${email}" class="modal__contact-btn modal__contact-btn--email">
+                        Email
+                    </a>
+                ` : ''}
+                
+                ${web ? `
+                    <a href="${web}" target="_blank" class="modal__contact-btn modal__contact-btn--web">
+                        Sitio Web
+                    </a>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    
+    // Configurar navegación de galería si hay múltiples imágenes
+    if (imagenes.length > 1) {
+        setupGalleryNavigation(imagenes.length);
+    }
+}
+
+// Configurar navegación de galería
+function setupGalleryNavigation(totalImages) {
+    const track = document.getElementById('galleryTrack');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const dots = document.querySelectorAll('.modal__gallery-dot');
+    
+    function updateGallery() {
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        
+        // Actualizar dots
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSlide);
+        });
+        
+        // Actualizar botones
+        prevBtn.disabled = currentSlide === 0;
+        nextBtn.disabled = currentSlide === totalImages - 1;
+    }
+    
+    prevBtn.addEventListener('click', () => {
+        if (currentSlide > 0) {
+            currentSlide--;
+            updateGallery();
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (currentSlide < totalImages - 1) {
+            currentSlide++;
+            updateGallery();
+        }
+    });
+    
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            currentSlide = index;
+            updateGallery();
+        });
+    });
+}
+
+// Cerrar modal
+function cerrarModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+modalClose.addEventListener('click', cerrarModal);
+modal.querySelector('.modal__overlay').addEventListener('click', cerrarModal);
+
+// Cerrar con ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+        cerrarModal();
+    }
+});
 
 // Inicializar la aplicación
 cargarDatos();
