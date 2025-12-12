@@ -159,6 +159,26 @@ function renderizarEmprendimientos() {
     });
 }
 
+// Función para formatear URL de Facebook
+function formatearFacebookURL(facebook) {
+    if (!facebook) return null;
+    
+    const fb = facebook.trim();
+    
+    // Si ya es una URL completa, devolverla
+    if (fb.startsWith('http://') || fb.startsWith('https://')) {
+        return fb;
+    }
+    
+    // Si es solo el nombre de usuario (sin espacios), agregar www.facebook.com
+    if (!fb.includes(' ') && !fb.includes('/')) {
+        return `https://www.facebook.com/${fb}`;
+    }
+    
+    // Si tiene espacios, buscar en Facebook
+    return `https://www.facebook.com/search/top?q=${encodeURIComponent(fb)}`;
+}
+
 // Función para convertir URL de Google Drive a enlace directo
 function convertirGoogleDriveURL(url) {
     if (!url || !url.includes('drive.google.com')) {
@@ -188,7 +208,7 @@ function convertirGoogleDriveURL(url) {
     
     if (fileId) {
         // Usar thumbnail para mejor compatibilidad
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
     }
     
     return url;
@@ -261,7 +281,7 @@ function crearCard(emp) {
                     
                     ${facebook ? `
                         <a 
-                            href="https://facebook.com/${facebook}" 
+                            href="${formatearFacebookURL(facebook)}" 
                             target="_blank"
                             class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--facebook"
                             onclick="event.stopPropagation()"
@@ -477,7 +497,7 @@ function abrirModal(emprendimiento) {
                 ` : ''}
                 
                 ${facebook ? `
-                    <a href="https://facebook.com/${facebook}" target="_blank" class="modal__contact-btn modal__contact-btn--facebook">
+                    <a href="${formatearFacebookURL(facebook)}" target="_blank" class="modal__contact-btn modal__contact-btn--facebook">
                         Facebook
                     </a>
                 ` : ''}
