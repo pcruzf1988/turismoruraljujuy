@@ -297,18 +297,20 @@ body {
   gap: 5px;
 }
 .emprendimiento-card__contact-btn--whatsapp {
-  background: #25D366;
+  background: linear-gradient(to bottom, #25D366, #1ebe5d 60%, #129c52);
   color: #FFFFFF;
 }
 .emprendimiento-card__contact-btn--whatsapp:hover {
-  background: rgb(29.3911290323, 167.6088709677, 81.0241935484);
+  background: linear-gradient(to bottom, #2ee673, #1fd467 60%, #18a85a);
+  transform: scale(1.05);
 }
 .emprendimiento-card__contact-btn--instagram {
-  background: #E4405F;
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
   color: #FFFFFF;
 }
 .emprendimiento-card__contact-btn--instagram:hover {
-  background: rgb(211.1513761468, 29.8486238532, 64.119266055);
+  background: linear-gradient(45deg, #f0a04b, #e67a54, #e03c57, #d93b78, #c7369b);
+  transform: scale(1.05);
 }
 .emprendimiento-card__contact-btn--facebook {
   background: #1877F2;
@@ -316,13 +318,17 @@ body {
 }
 .emprendimiento-card__contact-btn--facebook:hover {
   background: rgb(11.4549180328, 95.1639344262, 203.5450819672);
+  transform: scale(1.05);
 }
 .emprendimiento-card__contact-btn--email {
-  background: #CD853F;
+  background: #CFAF41;
   color: #FFFFFF;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
 }
 .emprendimiento-card__contact-btn--email:hover {
-  background: rgb(172.1652892562, 107.6033057851, 44.8347107438);
+  background: #b99b39;
+  transform: scale(1.05);
+  box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.25), inset 0 -2px 5px rgba(0, 0, 0, 0.25);
 }
 
 .map-section {
