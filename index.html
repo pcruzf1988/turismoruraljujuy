@@ -5,30 +5,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turismo Rural Jujuy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/styles.css">
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <h1 class="header__title">Turismo Rural Jujuy</h1>
-            <p class="header__subtitle">Descubrí los emprendimientos de turismo rural comunitario</p>
+    <!-- Hero Section -->
+    <section class="hero">
+        <!-- Imagen de fondo -->
+        <div class="hero__background">
+            <img src="./assets/ocumazo45.jpg" alt="Paisaje de Jujuy">
+        </div>
 
-            <!-- Buscador -->
-            <div class="search-bar">
-                <input type="text" id="searchInput" class="search-bar__input" placeholder="Buscar emprendimientos...">
-                <svg class="search-bar__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+        <!-- Patrón decorativo -->
+        <div class="hero__pattern"></div>
+
+        <!-- Elementos decorativos -->
+        <div class="hero__decoration hero__decoration--1"></div>
+        <div class="hero__decoration hero__decoration--2"></div>
+
+        <!-- Contenido principal -->
+        <div class="hero__content">
+            <span class="hero__badge">Economía Popular</span>
+            
+            <h1 class="hero__title">
+                Descubrí el <span class="hero__title-highlight">Turismo rural</span> de Jujuy
+            </h1>
+
+            <p class="hero__subtitle">
+                Una plataforma impulsada por la Secretaría de Economía Popular de Jujuy para conectar emprendedores locales con viajeros conscientes.
+            </p>
+
+            <p class="hero__description">
+                Desde los coloridos mercados de la Quebrada de Humahuaca hasta las cooperativas agrícolas en los valles, conectamos emprendedores locales con viajeros conscientes. Conocé historias de resiliencia, proyectos innovadores y experiencias auténticas que transforman comunidades.
+            </p>
+
+            <!-- Buscador integrado en hero -->
+            <div class="hero__search">
+                <input type="text" id="searchInput" class="hero__search-input" placeholder="Buscar emprendimientos...">
+                <svg class="hero__search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
             </div>
         </div>
-    </header>
+
+        <!-- Indicador de scroll -->
+        <div class="hero__scroll">
+            <span></span>
+            <div class="hero__scroll-icon"></div>
+        </div>
+    </section>
 
     <!-- Filtros -->
-    <section class="filters">
+    <section class="filters" id="emprendimientos">
         <div class="container">
             <div class="filters__wrapper">
                 <div class="filter-group">
@@ -81,8 +114,8 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p class="footer__text">Turismo Rural Jujuy - 2024</p>
-            <p class="footer__text footer__text--small">Promoviendo el turismo comunitario y sustentable</p>
+            <p class="footer__text">Turismo Rural Jujuy - 2025</p>
+            <p class="footer__text footer__text--small">Secretaría de Economía Popular - Promoviendo el turismo comunitario y sustentable</p>
         </div>
     </footer>
 
@@ -104,7 +137,7 @@
         </div>
     </div>
 
-    <!-- Script sin Papa Parse -->
+    <!-- Script -->
     <script src="./js/script.js"></script>
 </body>
 

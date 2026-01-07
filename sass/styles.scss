@@ -59,7 +59,7 @@ body {
     width: 100%;
     margin: 0 auto;
     padding: 0 20px;
-    
+
     @media (max-width: 768px) {
         padding: 0 15px;
     }
@@ -74,7 +74,7 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     position: relative;
     overflow: hidden;
-    
+
     @media (max-width: 768px) {
         padding: 40px 15px;
     }
@@ -173,7 +173,7 @@ body {
     margin: 30px 0;
     border-radius: 15px;
     @include card-shadow;
-    
+
     @media (max-width: 768px) {
         padding: 20px 15px;
         margin: 20px 0;
@@ -185,7 +185,7 @@ body {
         flex-wrap: wrap;
         align-items: flex-end;
         justify-content: center;
-        
+
         @media (max-width: 768px) {
             gap: 15px;
         }
@@ -421,18 +421,18 @@ body {
         }
 
         &--email {
-    background: #CFAF41;
-    color: $white;
-    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2),
+            background: #CFAF41;
+            color: $white;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2),
                 inset 0 -2px 4px rgba(0, 0, 0, 0.2);
 
-    &:hover {
-        background: #b99b39;
-        transform: scale(1.1);
-        box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.25),
+            &:hover {
+                background: #b99b39;
+                transform: scale(1.1);
+                box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.25),
                     inset 0 -2px 5px rgba(0, 0, 0, 0.25);
-    }
-}
+            }
+        }
     }
 }
 
@@ -441,7 +441,7 @@ body {
     background: $white;
     padding: 60px 20px;
     margin: 60px 0;
-    
+
     @media (max-width: 768px) {
         padding: 40px 15px;
         margin: 40px 0;
@@ -545,11 +545,11 @@ body {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .emprendimiento-card {
         margin: 0;
     }
-    
+
     .results-count {
         font-size: 1rem;
         padding: 0 10px;
@@ -874,3 +874,379 @@ body {
         transform: translateY(-4px);
     }
 }
+
+// ============================================
+// HERO SECTION
+// ============================================
+
+// Variables del hero (complementan las variables existentes del proyecto)
+$hero-overlay-dark: rgba(92, 46, 15, 0.85);
+$hero-overlay-medium: rgba(139, 69, 19, 0.75);
+$hero-overlay-green: rgba(74, 124, 89, 0.8);
+
+// Fuentes del hero (se cargan desde Google Fonts en el HTML)
+$font-display: 'Playfair Display', serif;
+$font-body-hero: 'Plus Jakarta Sans', sans-serif;
+
+.hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #5C2E0F;
+
+    // Imagen de fondo con overlay
+    &__background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg,
+                    $hero-overlay-dark 0%,
+                    $hero-overlay-medium 40%,
+                    $hero-overlay-green 100%);
+            z-index: 2;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+    }
+
+    // Patrón decorativo
+    &__pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        opacity: 0.08;
+        background-image: repeating-linear-gradient(45deg,
+                transparent,
+                transparent 35px,
+                rgba(255, 255, 255, 0.1) 35px,
+                rgba(255, 255, 255, 0.1) 70px);
+        pointer-events: none;
+    }
+
+    // Contenido principal
+    &__content {
+        position: relative;
+        z-index: 10;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 120px 40px 140px;
+        text-align: center;
+        color: #fff;
+    }
+
+    // Badge superior
+    &__badge {
+        display: inline-block;
+        padding: 12px 28px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        animation: fadeInDown 1s ease 0.2s both;
+    }
+
+    // Título principal
+    &__title {
+        font-family: $font-display;
+        font-size: clamp(2.5rem, 8vw, 5.5rem);
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 30px;
+        letter-spacing: -0.02em;
+        animation: fadeInUp 1s ease 0.4s both;
+    }
+
+    &__title-highlight {
+        display: inline-block;
+        color: #CD853F;
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 12px;
+            background: rgba(205, 133, 63, 0.3);
+            z-index: -1;
+            transform: skew(-12deg);
+        }
+    }
+
+    // Subtítulo
+    &__subtitle {
+        font-family: $font-body-hero;
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        line-height: 1.7;
+        max-width: 800px;
+        margin: 0 auto 25px;
+        opacity: 0.95;
+        font-weight: 400;
+        animation: fadeInUp 1s ease 0.6s both;
+    }
+
+    // Descripción expandida
+    &__description {
+        font-family: $font-body-hero;
+        font-size: clamp(1rem, 2vw, 1.15rem);
+        line-height: 1.8;
+        max-width: 900px;
+        margin: 0 auto 45px;
+        opacity: 0.88;
+        font-weight: 400;
+        animation: fadeInUp 1s ease 0.8s both;
+    }
+
+    // Buscador en hero
+    &__search {
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+        animation: fadeInUp 1s ease 1s both;
+    }
+
+    &__search-input {
+        width: 100%;
+        padding: 18px 60px 18px 24px;
+        font-size: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        color: #3E2723;
+        font-family: $font-body-hero;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+        &:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            border-color: #CD853F;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        &::placeholder {
+            color: #999;
+        }
+    }
+
+    &__search-icon {
+        position: absolute;
+        right: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #8B4513;
+        pointer-events: none;
+    }
+
+    // Indicador de scroll
+    &__scroll {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        animation: fadeIn 1s ease 1.5s both;
+
+        span {
+            display: block;
+            text-align: center;
+            width: 100%;
+        }
+        }
+
+        &__scroll-icon {
+            width: 24px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            position: relative;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 4px;
+                height: 8px;
+                background: rgba(255, 255, 255, 0.7);
+                border-radius: 2px;
+                animation: scrollBounce 2s ease infinite;
+            }
+        }
+
+        // Elementos decorativos flotantes
+        &__decoration {
+            position: absolute;
+            z-index: 4;
+            pointer-events: none;
+
+            &--1 {
+                top: 15%;
+                left: 8%;
+                width: 120px;
+                height: 120px;
+                background: radial-gradient(circle, rgba(205, 133, 63, 0.15) 0%, transparent 70%);
+                border-radius: 50%;
+                animation: float 8s ease-in-out infinite;
+            }
+
+            &--2 {
+                bottom: 20%;
+                right: 10%;
+                width: 80px;
+                height: 80px;
+                background: radial-gradient(circle, rgba(74, 124, 89, 0.15) 0%, transparent 70%);
+                border-radius: 50%;
+                animation: float 6s ease-in-out infinite 1s;
+            }
+        }
+
+        // Responsive del hero
+        @media (max-width: 768px) {
+            min-height: 100vh;
+
+            .hero__content {
+                padding: 100px 25px 100px;
+            }
+
+            .hero__badge {
+                padding: 10px 22px;
+                font-size: 0.8rem;
+                margin-bottom: 30px;
+            }
+
+            .hero__title {
+                margin-bottom: 20px;
+            }
+
+            .hero__title-highlight::after {
+                height: 8px;
+                bottom: 5px;
+            }
+
+            .hero__subtitle {
+                margin-bottom: 20px;
+            }
+
+            .hero__description {
+                margin-bottom: 35px;
+            }
+
+            .hero__search {
+                max-width: 100%;
+            }
+
+            .hero__search-input {
+                padding: 16px 50px 16px 20px;
+                font-size: 0.95rem;
+            }
+
+            .hero__search-icon {
+                right: 20px;
+            }
+
+            .hero__decoration--1,
+            .hero__decoration--2 {
+                display: none;
+            }
+
+            .hero__scroll {
+                bottom: 30px;
+                font-size: 0.75rem;
+            }
+
+            .hero__scroll-icon {
+                width: 20px;
+                height: 35px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero__content {
+                padding: 80px 20px 50px;
+            }
+
+            .hero__badge {
+                font-size: 0.75rem;
+                padding: 8px 18px;
+            }
+        }
+    }
+
+    // Animaciones del hero
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes scrollBounce {
+
+        0%,
+        100% {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        50% {
+            transform: translateX(-50%) translateY(8px);
+        }
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0) scale(1);
+        }
+
+        50% {
+            transform: translateY(-20px) scale(1.05);
+        }
+    }
