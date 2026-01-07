@@ -5,18 +5,32 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #F5F5DC 0%, #DEB887 100%);
   color: #3E2723;
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 .container {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 20px;
+}
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
 }
 
 .header {
@@ -27,6 +41,11 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
+}
+@media (max-width: 768px) {
+  .header {
+    padding: 40px 15px;
+  }
 }
 .header::before {
   content: "";
@@ -115,12 +134,23 @@ body {
   border-radius: 15px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+@media (max-width: 768px) {
+  .filters {
+    padding: 20px 15px;
+    margin: 20px 0;
+  }
+}
 .filters__wrapper {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: center;
+}
+@media (max-width: 768px) {
+  .filters__wrapper {
+    gap: 15px;
+  }
 }
 
 .filter-group {
@@ -282,10 +312,12 @@ body {
   justify-content: center;
 }
 .emprendimiento-card__contact-btn {
-  flex: 1;
-  min-width: 80px;
-  padding: 10px 15px;
-  border-radius: 8px;
+  flex: 0;
+  min-width: 45px;
+  width: 45px;
+  height: 45px;
+  padding: 0;
+  border-radius: 50%;
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
@@ -296,13 +328,17 @@ body {
   justify-content: center;
   gap: 5px;
 }
+.emprendimiento-card__contact-btn svg {
+  width: 20px;
+  height: 20px;
+}
 .emprendimiento-card__contact-btn--whatsapp {
   background: linear-gradient(to bottom, #25D366, #1ebe5d 60%, #129c52);
   color: #FFFFFF;
 }
 .emprendimiento-card__contact-btn--whatsapp:hover {
   background: linear-gradient(to bottom, #2ee673, #1fd467 60%, #18a85a);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 .emprendimiento-card__contact-btn--instagram {
   background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
@@ -310,7 +346,7 @@ body {
 }
 .emprendimiento-card__contact-btn--instagram:hover {
   background: linear-gradient(45deg, #f0a04b, #e67a54, #e03c57, #d93b78, #c7369b);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 .emprendimiento-card__contact-btn--facebook {
   background: #1877F2;
@@ -318,7 +354,7 @@ body {
 }
 .emprendimiento-card__contact-btn--facebook:hover {
   background: rgb(11.4549180328, 95.1639344262, 203.5450819672);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 .emprendimiento-card__contact-btn--email {
   background: #CFAF41;
@@ -327,7 +363,7 @@ body {
 }
 .emprendimiento-card__contact-btn--email:hover {
   background: #b99b39;
-  transform: scale(1.05);
+  transform: scale(1.1);
   box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.25), inset 0 -2px 5px rgba(0, 0, 0, 0.25);
 }
 
@@ -335,6 +371,12 @@ body {
   background: #FFFFFF;
   padding: 60px 20px;
   margin: 60px 0;
+}
+@media (max-width: 768px) {
+  .map-section {
+    padding: 40px 15px;
+    margin: 40px 0;
+  }
 }
 .map-section__title {
   font-size: 2.5rem;
@@ -344,7 +386,8 @@ body {
 }
 @media (max-width: 768px) {
   .map-section__title {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    margin-bottom: 30px;
   }
 }
 
@@ -352,6 +395,8 @@ body {
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
 }
 .map-container iframe {
   display: block;
@@ -411,9 +456,18 @@ body {
   }
   .filter-group {
     min-width: 100%;
+    width: 100%;
   }
   .emprendimientos-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .emprendimiento-card {
+    margin: 0;
+  }
+  .results-count {
+    font-size: 1rem;
+    padding: 0 10px;
   }
 }
 .modal {
