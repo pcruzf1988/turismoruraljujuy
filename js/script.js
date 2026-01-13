@@ -9,6 +9,7 @@ let emprendimientosFiltrados = [];
 const searchInput = document.getElementById('searchInput');
 const regionFilter = document.getElementById('regionFilter');
 const rubroFilter = document.getElementById('rubroFilter');
+const comunidadFilter = document.getElementById('comunidadFilter');
 const clearFiltersBtn = document.getElementById('clearFilters');
 const emprendimientosGrid = document.getElementById('emprendimientosGrid');
 const resultsCount = document.getElementById('resultsCount');
@@ -142,6 +143,50 @@ function llenarFiltros() {
         option.textContent = rubro;
         rubroFilter.appendChild(option);
     });
+
+    // Llenar comunidades inicialmente con todas las opciones
+    actualizarFiltroComunidades();
+}
+
+// Función para actualizar el filtro de comunidades según la región seleccionada
+function actualizarFiltroComunidades() {
+    const regionSeleccionada = regionFilter.value;
+    const rubroSeleccionado = rubroFilter.value;
+    
+    // Filtrar emprendimientos según región y rubro seleccionados
+    let emprendimientosFiltradosTemp = emprendimientos;
+    
+    if (regionSeleccionada) {
+        emprendimientosFiltradosTemp = emprendimientosFiltradosTemp.filter(e => e.Región === regionSeleccionada);
+    }
+    
+    if (rubroSeleccionado) {
+        emprendimientosFiltradosTemp = emprendimientosFiltradosTemp.filter(e => e.Rubro === rubroSeleccionado);
+    }
+    
+    // Obtener comunidades únicas de los emprendimientos filtrados
+    const comunidades = [...new Set(emprendimientosFiltradosTemp.map(e => e['Comunidad / Pueblo']))].filter(r => r).sort();
+    
+    // Guardar el valor actual del filtro de comunidades
+    const comunidadActual = comunidadFilter.value;
+    
+    // Limpiar el select de comunidades (excepto la primera opción)
+    comunidadFilter.innerHTML = '<option value="">Todas las comunidades / pueblos</option>';
+    
+    // Llenar con las nuevas opciones
+    comunidades.forEach(comunidad => {
+        const option = document.createElement('option');
+        option.value = comunidad;
+        option.textContent = comunidad;
+        comunidadFilter.appendChild(option);
+    });
+    
+    // Restaurar el valor si todavía existe en las nuevas opciones
+    if (comunidades.includes(comunidadActual)) {
+        comunidadFilter.value = comunidadActual;
+    } else {
+        comunidadFilter.value = '';
+    }
 }
 
 // Función para renderizar los emprendimientos
@@ -365,6 +410,7 @@ function aplicarFiltros() {
     const searchTerm = searchInput.value.toLowerCase();
     const regionSeleccionada = regionFilter.value;
     const rubroSeleccionado = rubroFilter.value;
+    const comunidadSeleccionada = comunidadFilter.value;
     
     emprendimientosFiltrados = emprendimientos.filter(emp => {
         // Filtro de búsqueda
@@ -379,7 +425,10 @@ function aplicarFiltros() {
         // Filtro de rubro
         const matchRubro = rubroSeleccionado === '' || emp.Rubro === rubroSeleccionado;
         
-        return matchSearch && matchRegion && matchRubro;
+        // Filtro de comunidad
+        const matchComunidad = comunidadSeleccionada === '' || emp['Comunidad / Pueblo'] === comunidadSeleccionada;
+        
+        return matchSearch && matchRegion && matchRubro && matchComunidad;
     });
     
     renderizarEmprendimientos();
@@ -391,13 +440,22 @@ function limpiarFiltros() {
     searchInput.value = '';
     regionFilter.value = '';
     rubroFilter.value = '';
+    comunidadFilter.value = '';
+    actualizarFiltroComunidades();
     aplicarFiltros();
 }
 
 // Event Listeners
 searchInput.addEventListener('input', aplicarFiltros);
-regionFilter.addEventListener('change', aplicarFiltros);
-rubroFilter.addEventListener('change', aplicarFiltros);
+regionFilter.addEventListener('change', () => {
+    actualizarFiltroComunidades();
+    aplicarFiltros();
+});
+rubroFilter.addEventListener('change', () => {
+    actualizarFiltroComunidades();
+    aplicarFiltros();
+});
+comunidadFilter.addEventListener('change', aplicarFiltros);
 clearFiltersBtn.addEventListener('click', limpiarFiltros);
 
 // Modal
