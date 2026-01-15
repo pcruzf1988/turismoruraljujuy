@@ -1074,6 +1074,11 @@ function cambiarVista(vista) {
         emprendimientosGrid.style.display = 'grid';
         mapView.style.display = 'none';
         
+        // Mostrar controles superiores de paginación
+        if (paginationControls && emprendimientosFiltrados.length > 0) {
+            paginationControls.style.display = 'flex';
+        }
+        
         // Mostrar controles inferiores si hay paginación activa
         if (paginationControlsBottom && itemsPerPage !== 'all' && emprendimientosFiltrados.length > 0) {
             paginationControlsBottom.style.display = 'flex';
@@ -1086,6 +1091,11 @@ function cambiarVista(vista) {
         // Mostrar mapa
         emprendimientosGrid.style.display = 'none';
         mapView.style.display = 'block';
+        
+        // Ocultar controles superiores de paginación en vista mapa
+        if (paginationControls) {
+            paginationControls.style.display = 'none';
+        }
         
         // Ocultar controles inferiores en vista mapa
         if (paginationControlsBottom) {
