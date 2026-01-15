@@ -259,6 +259,7 @@ body {
 // Main
 .main {
     padding: 40px 0;
+    padding-top: 20px;
 }
 
 // Grid de emprendimientos
@@ -436,41 +437,7 @@ body {
     }
 }
 
-// Mapa
-.map-section {
-    background: $white;
-    padding: 60px 20px;
-    margin: 60px 0;
 
-    @media (max-width: 768px) {
-        padding: 40px 15px;
-        margin: 40px 0;
-    }
-
-    &__title {
-        font-size: 2.5rem;
-        color: $primary;
-        text-align: center;
-        margin-bottom: 40px;
-
-        @media (max-width: 768px) {
-            font-size: 1.8rem;
-            margin-bottom: 30px;
-        }
-    }
-}
-
-.map-container {
-    border-radius: 15px;
-    overflow: hidden;
-    @include card-shadow;
-    width: 100%;
-    max-width: 100%;
-
-    iframe {
-        display: block;
-    }
-}
 
 // Footer
 .footer {
@@ -1250,3 +1217,341 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
             transform: translateY(-20px) scale(1.05);
         }
     }
+
+// ============================================
+// TOGGLE DE VISTAS Y MAPA INTERACTIVO
+// ============================================
+
+// Controles de vista
+.view-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+    
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+.view-toggle {
+    display: flex;
+    gap: 0;
+    background: $white;
+    border-radius: 10px;
+    padding: 4px;
+    @include card-shadow;
+    
+    &__btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: $dark;
+        cursor: pointer;
+        @include transition;
+        
+        svg {
+            stroke: $primary;
+        }
+        
+        &:hover:not(&--active) {
+            background: rgba($light-brown, 0.3);
+        }
+        
+        &--active {
+            background: linear-gradient(135deg, $primary 0%, $secondary 100%);
+            color: $white;
+            
+            svg {
+                stroke: $white;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            
+            span {
+                display: none;
+            }
+        }
+    }
+}
+
+// Vista de mapa
+.map-view {
+    width: 100%;
+    min-height: 600px;
+    margin-bottom: 40px;
+}
+
+.map-container {
+    width: 100% !important;
+    height: 600px !important;
+    border-radius: 15px;
+    overflow: hidden;
+    @include card-shadow;
+    
+    @media (max-width: 768px) {
+        height: 500px !important;
+        border-radius: 10px;
+    }
+}
+
+// Estilos para Leaflet - Mayor especificidad
+#map.map-container,
+.map-view #map {
+    width: 100% !important;
+    height: 600px !important;
+}
+
+// Marcadores personalizados
+.custom-marker {
+    background: transparent;
+    border: none;
+    
+    svg {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        @include transition(transform);
+        
+        &:hover {
+            transform: scale(1.1) translateY(-2px);
+        }
+    }
+}
+
+// Clusters personalizados
+.marker-cluster {
+    background: linear-gradient(
+        135deg,
+        rgba($primary, 0.8) 0%,
+        rgba($secondary, 0.9) 100%
+    );
+    border: 3px solid $white;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    div {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: transparent;
+    }
+
+    span {
+        font-weight: 700;
+        font-size: 14px;
+        color: $white;
+        line-height: 1;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        transform: translateX(-2.5px) translateY(-1.5px);
+    }
+
+    &-small {
+        width: 40px;
+        height: 40px;
+    }
+
+    &-medium {
+        width: 50px;
+        height: 50px;
+    }
+
+    &-large {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+// Popup personalizado del mapa
+.custom-popup {
+    .leaflet-popup-content-wrapper {
+        background: $white;
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    
+    .leaflet-popup-content {
+        margin: 0;
+        width: auto !important;
+    }
+    
+    .leaflet-popup-tip {
+        background: $white;
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.map-popup {
+    min-width: 200px;
+    max-width: 250px;
+    
+    &__image {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 12px 12px 0 0;
+        background: linear-gradient(135deg, $light-brown 0%, $accent 100%);
+    }
+    
+    &__title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: $primary;
+        padding: 12px 12px 8px;
+        margin: 0;
+        line-height: 1.3;
+    }
+    
+    &__tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        padding: 0 12px 12px;
+    }
+    
+    &__tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba($secondary, 0.15);
+        color: color.adjust($secondary, $lightness: -10%);
+    }
+    
+    &__btn {
+        width: calc(100% - 24px);
+        margin: 0 12px 12px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, $primary 0%, $secondary 100%);
+        color: $white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        @include transition;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        &:active {
+            transform: translateY(0);
+        }
+    }
+}
+
+// Controles de zoom del mapa
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    
+    a {
+        background: $white !important;
+        color: $primary !important;
+        border: none !important;
+        font-weight: 700;
+        @include transition;
+        
+        &:hover {
+            background: $light-brown !important;
+        }
+        
+        &:first-child {
+            border-radius: 8px 8px 0 0 !important;
+        }
+        
+        &:last-child {
+            border-radius: 0 0 8px 8px !important;
+        }
+    }
+}
+
+// Atribución del mapa
+.leaflet-control-attribution {
+    background: rgba($white, 0.8) !important;
+    backdrop-filter: blur(5px);
+    padding: 4px 8px !important;
+    border-radius: 4px;
+    font-size: 0.7rem !important;
+    
+    a {
+        color: $primary !important;
+    }
+}
+
+// Animaciones suaves para cambio de vista
+.emprendimientos-grid,
+.map-view {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+// Mensaje de no resultados
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 1.2rem;
+    color: $secondary;
+    background: $white;
+    border-radius: 15px;
+    @include card-shadow;
+}
+
+// Responsive adicional para el mapa
+@media (max-width: 480px) {
+    .map-container {
+        height: 400px;
+    }
+    
+    .view-toggle {
+        width: 100%;
+        
+        &__btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+    
+    .map-popup {
+        min-width: 180px;
+        
+        &__title {
+            font-size: 1rem;
+        }
+    }
+}

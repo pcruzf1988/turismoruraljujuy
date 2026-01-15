@@ -4,6 +4,9 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5g
 // Variables globales
 let emprendimientos = [];
 let emprendimientosFiltrados = [];
+let map = null;
+let markersLayer = null;
+let currentView = 'grid';
 
 // Elementos del DOM
 const searchInput = document.getElementById('searchInput');
@@ -13,6 +16,9 @@ const comunidadFilter = document.getElementById('comunidadFilter');
 const clearFiltersBtn = document.getElementById('clearFilters');
 const emprendimientosGrid = document.getElementById('emprendimientosGrid');
 const resultsCount = document.getElementById('resultsCount');
+const gridViewBtn = document.getElementById('gridViewBtn');
+const mapViewBtn = document.getElementById('mapViewBtn');
+const mapView = document.getElementById('mapView');
 
 // Parser de CSV robusto que maneja saltos de línea dentro de comillas
 function parseCSV(text) {
@@ -433,6 +439,7 @@ function aplicarFiltros() {
     
     renderizarEmprendimientos();
     actualizarContador();
+    actualizarMarcadores();
 }
 
 // Función para limpiar filtros
@@ -672,3 +679,272 @@ document.addEventListener('keydown', (e) => {
 
 // Inicializar la aplicación
 cargarDatos();
+
+// ============================================
+// FUNCIONES DEL MAPA INTERACTIVO
+// ============================================
+
+// Función para parsear coordenadas desde el campo "Ubicación"
+function parsearCoordenadas(ubicacion) {
+    if (!ubicacion || typeof ubicacion !== 'string') return null;
+    
+    // El formato es: "-23.xxx, -65.xxx"
+    const coords = ubicacion.split(',').map(c => c.trim());
+    
+    if (coords.length === 2) {
+        const lat = parseFloat(coords[0]);
+        const lng = parseFloat(coords[1]);
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+            return [lat, lng];
+        }
+    }
+    
+    return null;
+}
+
+// Inicializar el mapa de Leaflet
+function inicializarMapa() {
+    console.log('🗺️ Inicializando mapa...');
+    
+    // CRÍTICO: Establecer altura ANTES de crear el mapa
+    const mapContainer = document.getElementById('map');
+    mapContainer.style.height = '600px';
+    mapContainer.style.width = '100%';
+    
+    console.log('🗺️ Contenedor configurado:', mapContainer);
+    console.log('🗺️ Leaflet disponible:', typeof L !== 'undefined');
+    
+    // Crear el mapa centrado en Jujuy
+    map = L.map('map', {
+        center: [-23.8, -65.5],
+        zoom: 9,
+        zoomControl: true,
+        scrollWheelZoom: true
+    });
+    
+    console.log('🗺️ Mapa creado:', map);
+    
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri',
+    maxZoom: 18
+}).addTo(map);
+
+// Capa de etiquetas encima
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+    attribution: '© CartoDB',
+    maxZoom: 19,
+    subdomains: 'abcd'
+}).addTo(map);
+    
+    console.log('🗺️ Tiles agregados');
+    
+    // Crear capa de marcadores con clustering
+    markersLayer = L.markerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let size = 'small';
+            
+            if (count >= 10) size = 'large';
+            else if (count >= 5) size = 'medium';
+            
+            return L.divIcon({
+                html: `<div><span>${count}</span></div>`,
+                className: `marker-cluster marker-cluster-${size}`,
+                iconSize: L.point(40, 40)
+            });
+        }
+    });
+    
+    map.addLayer(markersLayer);
+    
+    console.log('🗺️ Capa de marcadores creada');
+    
+    // Cargar marcadores iniciales
+    actualizarMarcadores();
+    
+    console.log('🗺️ Mapa inicializado completamente');
+}
+
+// Crear icono personalizado para marcadores
+function crearIconoPersonalizado(rubro) {
+    // Colores basados en el rubro
+    let color = '#8B4513'; // Marrón tierra por defecto
+    
+    if (rubro) {
+        if (rubro.toLowerCase().includes('alojamiento') || rubro.toLowerCase().includes('hospedaje')) {
+            color = '#6B8E23'; // Verde oliva
+        } else if (rubro.toLowerCase().includes('gastronom') || rubro.toLowerCase().includes('comida')) {
+            color = '#D2691E'; // Chocolate
+        } else if (rubro.toLowerCase().includes('artesanía') || rubro.toLowerCase().includes('artesano')) {
+            color = '#CD853F'; // Peru (ocre)
+        }
+    }
+    
+    const svgIcon = `
+        <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 0C7.2 0 0 7.2 0 16c0 12 16 26 16 26s16-14 16-26c0-8.8-7.2-16-16-16z" 
+                  fill="${color}" stroke="#fff" stroke-width="2"/>
+            <circle cx="16" cy="16" r="6" fill="#fff"/>
+        </svg>
+    `;
+    
+    return L.divIcon({
+        html: svgIcon,
+        className: 'custom-marker',
+        iconSize: [32, 42],
+        iconAnchor: [16, 42],
+        popupAnchor: [0, -42]
+    });
+}
+
+// Actualizar marcadores en el mapa según filtros
+function actualizarMarcadores() {
+    console.log('📍 Actualizando marcadores...');
+    console.log('📍 Map existe:', !!map);
+    console.log('📍 MarkersLayer existe:', !!markersLayer);
+    
+    if (!map || !markersLayer) {
+        console.log('📍 No se puede actualizar: mapa o capa no inicializados');
+        return;
+    }
+    
+    // Limpiar marcadores existentes
+    markersLayer.clearLayers();
+    
+    console.log('📍 Emprendimientos filtrados:', emprendimientosFiltrados.length);
+    
+    let marcadoresCreados = 0;
+    
+    // Agregar marcadores de emprendimientos filtrados
+    emprendimientosFiltrados.forEach((emprendimiento) => {
+        const coords = parsearCoordenadas(emprendimiento['Ubicación (formato: -23.5772, -65.3969 latitud,longitud)']);
+        
+        console.log(`📍 ${emprendimiento.Emprendimiento}: coords =`, coords);
+        
+        if (coords) {
+            const marker = L.marker(coords, {
+                icon: crearIconoPersonalizado(emprendimiento.Rubro)
+            });
+            
+            // Crear popup con info básica
+            let imagenUrl = '';
+            if (emprendimiento.Imagen && emprendimiento.Imagen.trim()) {
+                imagenUrl = convertirGoogleDriveURL(emprendimiento.Imagen.trim());
+            } else {
+                imagenUrl = `https://picsum.photos/200/150?random=${Math.random()}`;
+            }
+            
+            const popupContent = `
+                <div class="map-popup">
+                    <img src="${imagenUrl}" alt="${emprendimiento.Emprendimiento}" class="map-popup__image"
+                         onerror="this.src='https://picsum.photos/200/150?random=${Math.random()}'">
+                    <h4 class="map-popup__title">${emprendimiento.Emprendimiento}</h4>
+                    <div class="map-popup__tags">
+                        ${emprendimiento.Región ? `<span class="map-popup__tag">${emprendimiento.Región}</span>` : ''}
+                        ${emprendimiento.Rubro ? `<span class="map-popup__tag">${emprendimiento.Rubro}</span>` : ''}
+                    </div>
+                    <button class="map-popup__btn" onclick="window.abrirModalDesdeMap('${emprendimiento.Emprendimiento.replace(/'/g, "\\'")}')">
+                        Ver detalles
+                    </button>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent, {
+                maxWidth: 250,
+                className: 'custom-popup'
+            });
+            
+            markersLayer.addLayer(marker);
+            marcadoresCreados++;
+        }
+    });
+    
+    console.log(`📍 Total marcadores creados: ${marcadoresCreados}`);
+    
+    // Ajustar vista del mapa si hay marcadores
+    if (markersLayer.getLayers().length > 0) {
+        map.fitBounds(markersLayer.getBounds(), {
+            padding: [50, 50],
+            maxZoom: 12
+        });
+    }
+}
+
+// Función global para abrir modal desde el mapa
+window.abrirModalDesdeMap = function(nombreEmprendimiento) {
+    const emprendimiento = emprendimientos.find(e => e.Emprendimiento === nombreEmprendimiento);
+    if (emprendimiento) {
+        abrirModal(emprendimiento);
+    }
+};
+
+// Cambiar entre vista grilla y mapa
+function cambiarVista(vista) {
+    console.log('👁️ Cambiando a vista:', vista);
+    currentView = vista;
+    
+    if (vista === 'grid') {
+        // Mostrar grilla
+        emprendimientosGrid.style.display = 'grid';
+        mapView.style.display = 'none';
+        
+        // Actualizar botones
+        gridViewBtn.classList.add('view-toggle__btn--active');
+        mapViewBtn.classList.remove('view-toggle__btn--active');
+    } else {
+        // Mostrar mapa
+        emprendimientosGrid.style.display = 'none';
+        mapView.style.display = 'block';
+        
+        // Actualizar botones
+        gridViewBtn.classList.remove('view-toggle__btn--active');
+        mapViewBtn.classList.add('view-toggle__btn--active');
+        
+        // Inicializar el mapa la primera vez que se muestra
+        if (!map) {
+            // Asegurar que el contenedor ya esté visible
+mapView.style.display = 'block';
+
+// Forzar reflow real del navegador
+const container = document.getElementById('map');
+container.style.height = '600px';
+container.style.width = '100%';
+container.offsetHeight; // ← línea CRÍTICA
+
+// Inicializar el mapa cuando el layout ya existe
+inicializarMapa();
+
+// Invalidar tamaño una sola vez (suficiente)
+setTimeout(() => {
+    map.invalidateSize();
+}, 50);
+
+
+        } else {
+            // Refrescar el mapa si ya existe
+            setTimeout(() => {
+                map.invalidateSize();
+                if (markersLayer && markersLayer.getLayers().length > 0) {
+                    map.fitBounds(markersLayer.getBounds(), {
+                        padding: [50, 50],
+                        maxZoom: 12
+                    });
+                }
+            }, 100);
+        }
+    }
+}
+
+// Event listeners para el toggle de vistas
+if (gridViewBtn) {
+    gridViewBtn.addEventListener('click', () => cambiarVista('grid'));
+}
+
+if (mapViewBtn) {
+    mapViewBtn.addEventListener('click', () => cambiarVista('map'));
+}
