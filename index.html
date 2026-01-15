@@ -126,6 +126,52 @@
             </div>
             <p class="results-count" id="resultsCount">Cargando emprendimientos...</p>
         </div>
+
+        <!-- NUEVO: Controles de paginación -->
+        <div class="pagination-controls" id="paginationControls" style="display: none;">
+            <div class="pagination-controls__left">
+                <label for="itemsPerPage" class="pagination-controls__label">Mostrar:</label>
+                <select id="itemsPerPage" class="pagination-controls__select">
+                    <option value="6">6 por página</option>
+                    <option value="12" selected>12 por página</option>
+                    <option value="24">24 por página</option>
+                    <option value="48">48 por página</option>
+                    <option value="all">Todos</option>
+                </select>
+            </div>
+
+            <div class="pagination-controls__center">
+                <button id="firstPage" class="pagination-controls__btn pagination-controls__btn--nav">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="11 17 6 12 11 7"></polyline>
+                        <polyline points="18 17 13 12 18 7"></polyline>
+                    </svg>
+                </button>
+                <button id="prevPage" class="pagination-controls__btn pagination-controls__btn--nav">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                
+                <span class="pagination-controls__info" id="pageInfo">Página 1 de 1</span>
+                
+                <button id="nextPage" class="pagination-controls__btn pagination-controls__btn--nav">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+                <button id="lastPage" class="pagination-controls__btn pagination-controls__btn--nav">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="13 17 18 12 13 7"></polyline>
+                        <polyline points="6 17 11 12 6 7"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="pagination-controls__right">
+                <span class="pagination-controls__count" id="rangeInfo">1-12 de 120</span>
+            </div>
+        </div>
     </div>
 
     <!-- Contenedor de vistas -->
@@ -134,6 +180,41 @@
             <!-- Vista Grilla -->
             <div class="emprendimientos-grid" id="emprendimientosGrid">
                 <!-- Las cards se generan dinámicamente con JavaScript -->
+            </div>
+
+            <!-- NUEVO: Controles de paginación inferiores (solo para vista grilla) -->
+            <div class="pagination-controls pagination-controls--bottom" id="paginationControlsBottom" style="display: none;">
+                <div class="pagination-controls__center">
+                    <button id="firstPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="11 17 6 12 11 7"></polyline>
+                            <polyline points="18 17 13 12 18 7"></polyline>
+                        </svg>
+                    </button>
+                    <button id="prevPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                    <span class="pagination-controls__info" id="pageInfoBottom">Página 1 de 1</span>
+                    
+                    <button id="nextPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    <button id="lastPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="13 17 18 12 13 7"></polyline>
+                            <polyline points="6 17 11 12 6 7"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="pagination-controls__right">
+                    <span class="pagination-controls__count" id="rangeInfoBottom">1-12 de 120</span>
+                </div>
             </div>
 
             <!-- Vista Mapa -->

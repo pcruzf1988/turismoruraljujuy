@@ -8,6 +8,10 @@ let map = null;
 let markersLayer = null;
 let currentView = 'grid';
 
+// Variables de paginación
+let currentPage = 1;
+let itemsPerPage = 12;
+
 // Elementos del DOM
 const searchInput = document.getElementById('searchInput');
 const regionFilter = document.getElementById('regionFilter');
@@ -19,6 +23,25 @@ const resultsCount = document.getElementById('resultsCount');
 const gridViewBtn = document.getElementById('gridViewBtn');
 const mapViewBtn = document.getElementById('mapViewBtn');
 const mapView = document.getElementById('mapView');
+
+// Elementos de paginación
+const paginationControls = document.getElementById('paginationControls');
+const itemsPerPageSelect = document.getElementById('itemsPerPage');
+const firstPageBtn = document.getElementById('firstPage');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const lastPageBtn = document.getElementById('lastPage');
+const pageInfo = document.getElementById('pageInfo');
+const rangeInfo = document.getElementById('rangeInfo');
+
+// Elementos de paginación inferior
+const paginationControlsBottom = document.getElementById('paginationControlsBottom');
+const firstPageBtnBottom = document.getElementById('firstPageBottom');
+const prevPageBtnBottom = document.getElementById('prevPageBottom');
+const nextPageBtnBottom = document.getElementById('nextPageBottom');
+const lastPageBtnBottom = document.getElementById('lastPageBottom');
+const pageInfoBottom = document.getElementById('pageInfoBottom');
+const rangeInfoBottom = document.getElementById('rangeInfoBottom');
 
 // Parser de CSV robusto que maneja saltos de línea dentro de comillas
 function parseCSV(text) {
@@ -201,13 +224,148 @@ function renderizarEmprendimientos() {
     
     if (emprendimientosFiltrados.length === 0) {
         mostrarEstadoVacio();
+        ocultarPaginacion();
         return;
     }
     
-    emprendimientosFiltrados.forEach(emp => {
+    // Determinar emprendimientos a mostrar según paginación
+    let emprendimientosAMostrar;
+    
+    if (itemsPerPage === 'all') {
+        // Mostrar todos
+        emprendimientosAMostrar = emprendimientosFiltrados;
+        ocultarPaginacion();
+    } else {
+        // Mostrar según paginación
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        emprendimientosAMostrar = emprendimientosFiltrados.slice(startIndex, endIndex);
+        actualizarPaginacion();
+    }
+    
+    emprendimientosAMostrar.forEach(emp => {
         const card = crearCard(emp);
         emprendimientosGrid.appendChild(card);
     });
+}
+
+// ============================================
+// FUNCIONES DE PAGINACIÓN
+// ============================================
+
+// Calcular total de páginas
+function calcularTotalPaginas() {
+    if (itemsPerPage === 'all') return 1;
+    return Math.ceil(emprendimientosFiltrados.length / itemsPerPage);
+}
+
+// Actualizar controles de paginación
+function actualizarPaginacion() {
+    const totalPages = calcularTotalPaginas();
+    
+    // Mostrar controles superiores
+    if (paginationControls) {
+        paginationControls.style.display = 'flex';
+    }
+    
+    // Mostrar controles inferiores (solo en vista grilla)
+    if (paginationControlsBottom && currentView === 'grid') {
+        paginationControlsBottom.style.display = 'flex';
+    }
+    
+    // Mostrar los botones de navegación y contadores superiores
+    const centerControls = paginationControls?.querySelector('.pagination-controls__center');
+    const rightControls = paginationControls?.querySelector('.pagination-controls__right');
+    
+    if (centerControls) centerControls.style.display = 'flex';
+    if (rightControls) rightControls.style.display = 'flex';
+    
+    // Actualizar info de página (superior)
+    if (pageInfo) {
+        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    }
+    
+    // Actualizar info de página (inferior)
+    if (pageInfoBottom) {
+        pageInfoBottom.textContent = `Página ${currentPage} de ${totalPages}`;
+    }
+    
+    // Actualizar rango de elementos mostrados (superior)
+    if (rangeInfo) {
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
+        rangeInfo.textContent = `${startIndex}-${endIndex} de ${emprendimientosFiltrados.length}`;
+    }
+    
+    // Actualizar rango de elementos mostrados (inferior)
+    if (rangeInfoBottom) {
+        const startIndex = (currentPage - 1) * itemsPerPage + 1;
+        const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
+        rangeInfoBottom.textContent = `${startIndex}-${endIndex} de ${emprendimientosFiltrados.length}`;
+    }
+    
+    // Habilitar/deshabilitar botones superiores
+    if (firstPageBtn) firstPageBtn.disabled = currentPage === 1;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+    if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages;
+    
+    // Habilitar/deshabilitar botones inferiores
+    if (firstPageBtnBottom) firstPageBtnBottom.disabled = currentPage === 1;
+    if (prevPageBtnBottom) prevPageBtnBottom.disabled = currentPage === 1;
+    if (nextPageBtnBottom) nextPageBtnBottom.disabled = currentPage === totalPages;
+    if (lastPageBtnBottom) lastPageBtnBottom.disabled = currentPage === totalPages;
+}
+
+// Ocultar paginación (solo los botones de navegación, no el selector)
+function ocultarPaginacion() {
+    if (paginationControls) {
+        paginationControls.style.display = 'flex'; // Mantener visible el control
+    }
+    
+    // Ocultar solo los botones de navegación y contadores superiores
+    const centerControls = paginationControls?.querySelector('.pagination-controls__center');
+    const rightControls = paginationControls?.querySelector('.pagination-controls__right');
+    
+    if (centerControls) centerControls.style.display = 'none';
+    if (rightControls) rightControls.style.display = 'none';
+    
+    // Ocultar completamente los controles inferiores cuando se selecciona "Todos"
+    if (paginationControlsBottom) {
+        paginationControlsBottom.style.display = 'none';
+    }
+}
+
+// Ir a una página específica
+function irAPagina(numeroPagina) {
+    const totalPages = calcularTotalPaginas();
+    
+    if (numeroPagina < 1) {
+        currentPage = 1;
+    } else if (numeroPagina > totalPages) {
+        currentPage = totalPages;
+    } else {
+        currentPage = numeroPagina;
+    }
+    
+    renderizarEmprendimientos();
+    
+    // Scroll suave hacia arriba
+    const emprendimientosSection = document.getElementById('emprendimientos');
+    if (emprendimientosSection) {
+        emprendimientosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Cambiar cantidad de elementos por página
+function cambiarItemsPorPagina(valor) {
+    if (valor === 'all') {
+        itemsPerPage = 'all';
+    } else {
+        itemsPerPage = parseInt(valor);
+    }
+    currentPage = 1; // Resetear a primera página
+    renderizarEmprendimientos();
 }
 
 // Función para formatear URL de Facebook
@@ -436,6 +594,9 @@ function aplicarFiltros() {
         
         return matchSearch && matchRegion && matchRubro && matchComunidad;
     });
+    
+    // Resetear a primera página cuando se aplican filtros
+    currentPage = 1;
     
     renderizarEmprendimientos();
     actualizarContador();
@@ -893,6 +1054,11 @@ function cambiarVista(vista) {
         emprendimientosGrid.style.display = 'grid';
         mapView.style.display = 'none';
         
+        // Mostrar controles inferiores si hay paginación activa
+        if (paginationControlsBottom && itemsPerPage !== 'all' && emprendimientosFiltrados.length > 0) {
+            paginationControlsBottom.style.display = 'flex';
+        }
+        
         // Actualizar botones
         gridViewBtn.classList.add('view-toggle__btn--active');
         mapViewBtn.classList.remove('view-toggle__btn--active');
@@ -900,6 +1066,11 @@ function cambiarVista(vista) {
         // Mostrar mapa
         emprendimientosGrid.style.display = 'none';
         mapView.style.display = 'block';
+        
+        // Ocultar controles inferiores en vista mapa
+        if (paginationControlsBottom) {
+            paginationControlsBottom.style.display = 'none';
+        }
         
         // Actualizar botones
         gridViewBtn.classList.remove('view-toggle__btn--active');
@@ -947,4 +1118,94 @@ if (gridViewBtn) {
 
 if (mapViewBtn) {
     mapViewBtn.addEventListener('click', () => cambiarVista('map'));
+}
+
+// ============================================
+// EVENT LISTENERS PARA PAGINACIÓN
+// ============================================
+
+// Selector de items por página
+if (itemsPerPageSelect) {
+    itemsPerPageSelect.addEventListener('change', (e) => {
+        cambiarItemsPorPagina(e.target.value);
+    });
+}
+
+// Botón primera página
+if (firstPageBtn) {
+    firstPageBtn.addEventListener('click', () => {
+        irAPagina(1);
+    });
+}
+
+// Botón página anterior
+if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', () => {
+        irAPagina(currentPage - 1);
+    });
+}
+
+// Botón página siguiente
+if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', () => {
+        irAPagina(currentPage + 1);
+    });
+}
+
+// Botón última página
+if (lastPageBtn) {
+    lastPageBtn.addEventListener('click', () => {
+        const totalPages = calcularTotalPaginas();
+        irAPagina(totalPages);
+    });
+}
+
+// ============================================
+// EVENT LISTENERS PARA PAGINACIÓN INFERIOR
+// ============================================
+
+// Botón primera página (inferior)
+if (firstPageBtnBottom) {
+    firstPageBtnBottom.addEventListener('click', () => {
+        irAPagina(1);
+    });
+}
+
+// Botón página anterior (inferior)
+if (prevPageBtnBottom) {
+    prevPageBtnBottom.addEventListener('click', () => {
+        irAPagina(currentPage - 1);
+    });
+}
+
+// Botón página siguiente (inferior)
+if (nextPageBtnBottom) {
+    nextPageBtnBottom.addEventListener('click', () => {
+        irAPagina(currentPage + 1);
+    });
+}
+
+// Botón última página (inferior)
+if (lastPageBtnBottom) {
+    lastPageBtnBottom.addEventListener('click', () => {
+        const totalPages = calcularTotalPaginas();
+        irAPagina(totalPages);
+    });
+}
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+// Inicializar controles de paginación al cargar
+if (paginationControls) {
+    // Mostrar el control principal
+    paginationControls.style.display = 'flex';
+    
+    // Ocultar inicialmente los botones hasta que se carguen datos
+    const centerControls = paginationControls.querySelector('.pagination-controls__center');
+    const rightControls = paginationControls.querySelector('.pagination-controls__right');
+    
+    if (centerControls) centerControls.style.display = 'none';
+    if (rightControls) rightControls.style.display = 'none';
 }
