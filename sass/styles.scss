@@ -1328,6 +1328,99 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
     }
 }
 
+// Marcadores con iconos PNG
+.leaflet-marker-icon.custom-marker-icon {
+    background: $white !important;
+    border-radius: 50% !important;
+    padding: 6px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    @include transition(transform);
+    
+    &:hover {
+        transform: scale(1.15) translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+    }
+    
+    img {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain;
+    }
+}
+
+// Leyenda del mapa
+.map-legend {
+    background: $white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    @include card-shadow;
+    
+    &__title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: $primary;
+        margin: 0 0 15px 0;
+        font-family: 'Playfair Display', serif;
+    }
+    
+    &__items {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+        
+        @media (max-width: 768px) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba($light-brown, 0.2);
+        border-radius: 8px;
+        @include transition(background);
+        
+        &:hover {
+            background: rgba($light-brown, 0.35);
+        }
+    }
+    
+    &__icon {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+    
+    &__label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: $dark;
+    }
+    
+    &__note {
+        font-size: 0.85rem;
+        color: color.adjust($dark, $lightness: 20%);
+        font-style: italic;
+        margin: 0;
+        padding: 12px;
+        background: rgba($accent, 0.1);
+        border-radius: 8px;
+        border-left: 3px solid $accent;
+    }
+}
+
 // Clusters personalizados
 .marker-cluster {
     background: linear-gradient(

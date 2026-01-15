@@ -880,6 +880,8 @@ function inicializarMapa() {
     map = L.map('map', {
         center: [-23.8, -65.5],
         zoom: 9,
+        minZoom: 7,
+        maxZoom: 16,
         zoomControl: true,
         scrollWheelZoom: true
     });
@@ -888,13 +890,13 @@ function inicializarMapa() {
     
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Tiles © Esri',
-    maxZoom: 18
+    maxZoom: 16
 }).addTo(map);
 
 // Capa de etiquetas encima
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
     attribution: '© CartoDB',
-    maxZoom: 19,
+    maxZoom: 16,
     subdomains: 'abcd'
 }).addTo(map);
     
@@ -931,35 +933,53 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{
     console.log('🗺️ Mapa inicializado completamente');
 }
 
-// Crear icono personalizado para marcadores
-function crearIconoPersonalizado(rubro) {
-    // Colores basados en el rubro
-    let color = '#8B4513'; // Marrón tierra por defecto
+// Función para obtener el nombre del archivo de icono según rubro y región
+function obtenerIconoPorRubroYRegion(rubro, region) {
+    // Normalizar texto para comparación
+    const rubroLower = rubro ? rubro.toLowerCase() : '';
+    const regionLower = region ? region.toLowerCase() : '';
     
-    if (rubro) {
-        if (rubro.toLowerCase().includes('alojamiento') || rubro.toLowerCase().includes('hospedaje')) {
-            color = '#6B8E23'; // Verde oliva
-        } else if (rubro.toLowerCase().includes('gastronom') || rubro.toLowerCase().includes('comida')) {
-            color = '#D2691E'; // Chocolate
-        } else if (rubro.toLowerCase().includes('artesanía') || rubro.toLowerCase().includes('artesano')) {
-            color = '#CD853F'; // Peru (ocre)
-        }
+    // Determinar el tipo de rubro
+    let tipoRubro = 'experiencia'; // Por defecto
+    
+    if (rubroLower.includes('alojamiento') || rubroLower.includes('hospedaje')) {
+        tipoRubro = 'alojamiento';
+    } else if (rubroLower.includes('artesanía') || rubroLower.includes('artesano')) {
+        tipoRubro = 'artesania';
+    } else if (rubroLower.includes('caballo') || rubroLower.includes('paseo')) {
+        tipoRubro = 'caballo';
+    } else if (rubroLower.includes('gastronom') || rubroLower.includes('comida')) {
+        tipoRubro = 'gastronomia';
+    } else if (rubroLower.includes('guía') || rubroLower.includes('guia')) {
+        tipoRubro = 'guia';
+    } else if (rubroLower.includes('experiencia')) {
+        tipoRubro = 'experiencia';
     }
     
-    const svgIcon = `
-        <svg width="32" height="42" viewBox="0 0 32 42" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.2 0 0 7.2 0 16c0 12 16 26 16 26s16-14 16-26c0-8.8-7.2-16-16-16z" 
-                  fill="${color}" stroke="#fff" stroke-width="2"/>
-            <circle cx="16" cy="16" r="6" fill="#fff"/>
-        </svg>
-    `;
+    // Determinar el color según la región
+    let colorRegion = 'bordo'; // Por defecto Quebrada
     
-    return L.divIcon({
-        html: svgIcon,
-        className: 'custom-marker',
-        iconSize: [32, 42],
-        iconAnchor: [16, 42],
-        popupAnchor: [0, -42]
+    if (regionLower.includes('puna')) {
+        colorRegion = 'amarillo';
+    } else if (regionLower.includes('yungas')) {
+        colorRegion = 'verde';
+    } else if (regionLower.includes('quebrada')) {
+        colorRegion = 'bordo';
+    }
+    
+    return `./assets/${tipoRubro}-${colorRegion}.png`;
+}
+
+// Crear icono personalizado para marcadores
+function crearIconoPersonalizado(rubro, region) {
+    const iconUrl = obtenerIconoPorRubroYRegion(rubro, region);
+    
+    return L.icon({
+        iconUrl: iconUrl,
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40],
+        className: 'custom-marker-icon'
     });
 }
 
@@ -989,7 +1009,7 @@ function actualizarMarcadores() {
         
         if (coords) {
             const marker = L.marker(coords, {
-                icon: crearIconoPersonalizado(emprendimiento.Rubro)
+                icon: crearIconoPersonalizado(emprendimiento.Rubro, emprendimiento.Región)
             });
             
             // Crear popup con info básica
@@ -1031,7 +1051,7 @@ function actualizarMarcadores() {
     if (markersLayer.getLayers().length > 0) {
         map.fitBounds(markersLayer.getBounds(), {
             padding: [50, 50],
-            maxZoom: 12
+            maxZoom: 15
         });
     }
 }
@@ -1103,7 +1123,7 @@ setTimeout(() => {
                 if (markersLayer && markersLayer.getLayers().length > 0) {
                     map.fitBounds(markersLayer.getBounds(), {
                         padding: [50, 50],
-                        maxZoom: 12
+                        maxZoom: 15
                     });
                 }
             }, 100);
