@@ -445,12 +445,22 @@ function crearCard(emp) {
     }
     
     card.innerHTML = `
-        <img 
-            src="${imagenUrl}" 
-            alt="${emp.Emprendimiento}"
-            class="emprendimiento-card__image"
-            onerror="this.src='https://picsum.photos/400/200?random=${Math.random()}'"
-        >
+        <div class="emprendimiento-card__image-container">
+            <img 
+                src="${imagenUrl}" 
+                alt="${emp.Emprendimiento}"
+                class="emprendimiento-card__image"
+                onerror="this.src='https://picsum.photos/400/200?random=${Math.random()}'"
+            >
+            <div class="emprendimiento-card__badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>Ver más</span>
+            </div>
+        </div>
         <div class="emprendimiento-card__content">
             <div class="emprendimiento-card__header">
                 <h3 class="emprendimiento-card__title">${emp.Emprendimiento}</h3>

@@ -277,9 +277,52 @@ body {
     overflow: hidden;
     @include card-shadow;
     @include transition;
-    @include hover-lift;
     display: flex;
     flex-direction: column;
+    cursor: pointer;
+
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+
+        .emprendimiento-card__badge {
+            background: rgba($primary, 0.95);
+            transform: scale(1.05);
+        }
+    }
+
+    &__image-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    &__badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba($primary, 0.85);
+        color: $white;
+        padding: 8px 14px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        @include transition(all, 0.2s);
+        z-index: 2;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        span {
+            line-height: 1;
+        }
+    }
 
     &__image {
         width: 100%;
@@ -455,6 +498,16 @@ body {
             opacity: 0.8;
         }
     }
+}
+
+.footer__logo {
+    max-width: 150px;
+    height: auto;
+    transition: opacity 0.3s ease;
+}
+
+.footer__logo:hover {
+    opacity: 0.8;
 }
 
 // Estado vacío
@@ -1284,11 +1337,14 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
         }
         
         @media (max-width: 768px) {
-            padding: 10px 16px;
-            font-size: 0.9rem;
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            flex-direction: column;
+            gap: 4px;
             
-            span {
-                display: none;
+            svg {
+                width: 20px;
+                height: 20px;
             }
         }
     }
