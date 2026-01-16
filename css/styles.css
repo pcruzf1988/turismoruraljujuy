@@ -390,12 +390,12 @@ body {
   transform: scale(1.1);
 }
 .emprendimiento-card__contact-btn--email {
-  background: #CFAF41;
+  background: rgb(210, 52, 52);
   color: #FFFFFF;
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
 }
 .emprendimiento-card__contact-btn--email:hover {
-  background: #b99b39;
+  background: brown;
   transform: scale(1.1);
   box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.25), inset 0 -2px 5px rgba(0, 0, 0, 0.25);
 }
