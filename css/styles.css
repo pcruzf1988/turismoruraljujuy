@@ -693,6 +693,12 @@ body {
 .modal__contact-btn--web:hover {
   background: rgb(76.1694915254, 101.0847457627, 24.9152542373);
 }
+.modal__contact-btn--maps {
+  background: #4285F4;
+}
+.modal__contact-btn--maps:hover {
+  background: rgb(17.805, 101.89, 241.195);
+}
 
 @keyframes slideUp {
   from {

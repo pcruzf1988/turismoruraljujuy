@@ -818,6 +818,14 @@ body {
                 background: color.adjust($green, $lightness: -10%);
             }
         }
+        
+        &--maps {
+            background: #4285F4;
+
+            &:hover {
+                background: color.adjust(#4285F4, $lightness: -10%);
+            }
+        }
     }
 }
 
