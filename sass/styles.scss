@@ -1878,3 +1878,15 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
         }
     }
 }
+
+// Lazy loading de imágenes
+.emprendimiento-card__image {
+    &.lazy-load {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+    }
+    
+    &.loaded {
+        opacity: 1;
+    }
+}

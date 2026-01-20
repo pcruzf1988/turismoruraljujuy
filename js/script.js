@@ -445,23 +445,24 @@ function crearCard(emp) {
     }
     
     card.innerHTML = `
-        <div class="emprendimiento-card__image-container">
-            <img 
-                src="${imagenUrl}" 
-                alt="${emp.Emprendimiento}"
-                class="emprendimiento-card__image"
-                onerror="this.src='https://picsum.photos/400/200?random=${Math.random()}'"
-            >
-            <div class="emprendimiento-card__badge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                <span>Ver más</span>
-            </div>
+    <div class="emprendimiento-card__image-container">
+        <img 
+            data-src="${imagenUrl}" 
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%23DEB887'/%3E%3C/svg%3E"
+            alt="${emp.Emprendimiento}"
+            class="emprendimiento-card__image lazy-load"
+            loading="lazy"
+        >
+        <div class="emprendimiento-card__badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <span>Ver más</span>
         </div>
-        <div class="emprendimiento-card__content">
+    </div>
+    <div class="emprendimiento-card__content">
             <div class="emprendimiento-card__header">
                 <h3 class="emprendimiento-card__title">${emp.Emprendimiento}</h3>
                 <div class="emprendimiento-card__tags">
@@ -1262,3 +1263,66 @@ if (paginationControls) {
     if (centerControls) centerControls.style.display = 'none';
     if (rightControls) rightControls.style.display = 'none';
 }
+
+// ============================================
+// LAZY LOADING DE IMÁGENES
+// ============================================
+
+function initLazyLoading() {
+    const lazyImages = document.querySelectorAll('img.lazy-load');
+    
+    // Si el navegador soporta IntersectionObserver
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const realSrc = img.getAttribute('data-src');
+                    
+                    if (realSrc) {
+                        // Crear nueva imagen para precargar
+                        const tempImg = new Image();
+                        
+                        tempImg.onload = () => {
+                            img.src = realSrc;
+                            img.classList.add('loaded');
+                        };
+                        
+                        tempImg.onerror = () => {
+                            // Si falla, usar el placeholder de picsum
+                            img.src = `https://picsum.photos/400/200?random=${Math.random()}`;
+                            img.classList.add('loaded');
+                        };
+                        
+                        tempImg.src = realSrc;
+                    }
+                    
+                    observer.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '50px' // Empezar a cargar 50px antes de que entre en pantalla
+        });
+        
+        lazyImages.forEach(img => imageObserver.observe(img));
+    } else {
+        // Fallback para navegadores viejos - cargar todas
+        lazyImages.forEach(img => {
+            const realSrc = img.getAttribute('data-src');
+            if (realSrc) {
+                img.src = realSrc;
+            }
+        });
+    }
+}
+
+// Llamar lazy loading cada vez que se renderizan emprendimientos
+const renderizarEmprendimientosOriginal = renderizarEmprendimientos;
+renderizarEmprendimientos = function() {
+    renderizarEmprendimientosOriginal();
+    
+    // Esperar un tick para que el DOM se actualice
+    setTimeout(() => {
+        initLazyLoading();
+    }, 0);
+};

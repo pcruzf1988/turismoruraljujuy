@@ -1575,4 +1575,12 @@ body {
   }
 }
 
+.emprendimiento-card__image.lazy-load {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+.emprendimiento-card__image.loaded {
+  opacity: 1;
+}
+
 /*# sourceMappingURL=styles.css.map */
