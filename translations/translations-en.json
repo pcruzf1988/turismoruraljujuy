@@ -1,0 +1,95 @@
+{
+  "language": "en",
+  "languageName": "English",
+  "hero": {
+    "badge": "Popular Economy",
+    "title": "Discover",
+    "titleHighlight": "Rural Tourism",
+    "titleEnd": "in Jujuy",
+    "subtitle": "A platform driven by the Secretariat of Popular Economy of Jujuy to connect local entrepreneurs with conscious travelers.",
+    "description": "From the colorful markets of the Quebrada de Humahuaca to agricultural cooperatives in the valleys, we connect local entrepreneurs with conscious travelers. Discover stories of resilience, innovative projects, and authentic experiences that transform communities.",
+    "searchPlaceholder": "Search enterprises..."
+  },
+  "filters": {
+    "region": "Region:",
+    "allRegions": "All regions",
+    "rubro": "Category:",
+    "allRubros": "All categories",
+    "community": "Community / Town:",
+    "allCommunities": "All communities / towns",
+    "clearFilters": "Clear filters"
+  },
+  "views": {
+    "grid": "Grid",
+    "map": "Map",
+    "loading": "Loading enterprises..."
+  },
+  "pagination": {
+    "show": "Show:",
+    "perPage": "per page",
+    "all": "All",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing"
+  },
+  "cards": {
+    "viewMore": "View more",
+    "noResults": "No results found",
+    "noResultsText": "Try different filters or search terms",
+    "error": "Error loading data",
+    "errorText": "Please reload the page",
+    "resultsCount": "enterprises found"
+  },
+  "map": {
+    "legend": "Legend",
+    "legendNote": "Icon colors vary by region: yellow (Puna), burgundy (Quebrada), green (Yungas)",
+    "categories": {
+      "alojamiento": "Accommodation",
+      "artesania": "Handicrafts",
+      "caballo": "Horse riding",
+      "experiencia": "Experiences",
+      "gastronomia": "Gastronomy",
+      "guia": "Guides"
+    }
+  },
+  "footer": {
+    "title": "Rural Tourism Jujuy - 2025",
+    "description": "Secretariat of Popular Economy - Promoting community and sustainable tourism"
+  },
+  "ayni": {
+    "name": "Ayni",
+    "online": "Online",
+    "inputPlaceholder": "Type your message here...",
+    "welcome": "Hello! I'm <strong>Ayni</strong>, your rural tourism assistant in Jujuy. How can I help you today? 🌄",
+    "suggestions": {
+      "quebrada": "🏔️ Quebrada de Humahuaca",
+      "alojamiento": "🏠 Accommodation",
+      "artesanias": "🎨 Handicrafts"
+    },
+    "responses": {
+      "quebrada": "The Quebrada de Humahuaca is beautiful! 🏔️ I found several enterprises in that region. Would you like to see accommodations, handicrafts, or gastronomic experiences?",
+      "alojamiento": "🏠 We have several rural accommodations available. You can filter by region using the filters at the top. Do you prefer Quebrada, Puna, or Yungas?",
+      "artesania": "🎨 Jujuy's handicrafts are unique! Textiles, ceramics, weavings... Use the category filter to see all handicraft enterprises.",
+      "gastronomia": "😋 Jujuy's gastronomy is delicious. Find gastronomic enterprises using the \"Category\" filter and selecting Gastronomy.",
+      "puna": "✨ The Puna is a unique landscape in the world. There are enterprises from indigenous communities offering authentic experiences. Filter by \"Puna\" region to see them.",
+      "yungas": "🌿 The Yungas have incredible biodiversity. There are several sustainable tourism enterprises in that region. Filter by \"Yungas\" to explore them.",
+      "mapa": "🗺️ You can view all enterprises on the map! Click the \"Map\" button at the top to change the view.",
+      "filtro": "🔍 Use the filters at the top to search by region, category, or community. You can also use the search bar to find something specific.",
+      "gracias": "You're welcome! 😊 I'm here to help you discover rural tourism in Jujuy. Is there anything else you'd like to know?",
+      "hola": "Hello! 👋 How can I help you find rural tourism enterprises in Jujuy?",
+      "default": "I can help you find rural tourism enterprises in Jujuy. You can search by region (Quebrada, Puna, Yungas), by category (accommodation, handicrafts, gastronomy), or by specific community. What would you like to explore? 🌄"
+    },
+    "keywords": {
+      "quebrada": ["quebrada", "humahuaca"],
+      "alojamiento": ["accommodation", "lodging", "sleep", "hotel", "hostel", "stay"],
+      "artesania": ["handicraft", "artisan", "crafts", "artesania"],
+      "gastronomia": ["gastronomy", "food", "eat", "restaurant", "dining"],
+      "puna": ["puna"],
+      "yungas": ["yungas"],
+      "mapa": ["map"],
+      "filtro": ["filter", "search"],
+      "gracias": ["thanks", "thank you", "gracias"],
+      "hola": ["hello", "hi", "hey", "hola"]
+    }
+  }
+}

@@ -18,11 +18,37 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     
-    <link rel="stylesheet" href="./css/styles.css?v=1.3">
+    <link rel="stylesheet" href="./css/styles.css?v=1.4">
     
 </head>
 
 <body>
+    <!-- Selector de idioma -->
+    <div class="language-selector" id="languageSelector">
+        <button class="language-selector__button" id="languageSelectorBtn" aria-label="Cambiar idioma">
+            <svg class="language-selector__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span class="language-selector__current" id="currentLanguage">ES</span>
+        </button>
+        <div class="language-selector__dropdown" id="languageDropdown">
+            <button class="language-selector__option" data-lang="es">
+                <span class="language-selector__flag">🇦🇷</span>
+                <span class="language-selector__name">Español</span>
+            </button>
+            <button class="language-selector__option" data-lang="en">
+                <span class="language-selector__flag">🇬🇧</span>
+                <span class="language-selector__name">English</span>
+            </button>
+            <button class="language-selector__option" data-lang="fr">
+                <span class="language-selector__flag">🇫🇷</span>
+                <span class="language-selector__name">Français</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Hero Section -->
     <section class="hero">
         <!-- Imagen de fondo -->
@@ -39,23 +65,23 @@
 
         <!-- Contenido principal -->
         <div class="hero__content">
-            <span class="hero__badge">Economía Popular</span>
+            <span class="hero__badge" data-i18n="hero.badge">Economía Popular</span>
             
             <h1 class="hero__title">
-                Descubrí el <span class="hero__title-highlight">Turismo rural</span> de Jujuy
+                <span data-i18n="hero.title">Descubrí el</span> <span class="hero__title-highlight" data-i18n="hero.titleHighlight">Turismo rural</span> <span data-i18n="hero.titleEnd">de Jujuy</span>
             </h1>
 
-            <p class="hero__subtitle">
+            <p class="hero__subtitle" data-i18n="hero.subtitle">
                 Una plataforma impulsada por la Secretaría de Economía Popular de Jujuy para conectar emprendedores locales con viajeros conscientes.
             </p>
 
-            <p class="hero__description">
+            <p class="hero__description" data-i18n="hero.description">
                 Desde los coloridos mercados de la Quebrada de Humahuaca hasta las cooperativas agrícolas en los valles, conectamos emprendedores locales con viajeros conscientes. Conocé historias de resiliencia, proyectos innovadores y experiencias auténticas que transforman comunidades.
             </p>
 
             <!-- Buscador integrado en hero -->
             <div class="hero__search">
-                <input type="text" id="searchInput" class="hero__search-input" placeholder="Buscar emprendimientos...">
+                <input type="text" id="searchInput" class="hero__search-input" placeholder="Buscar emprendimientos..." data-i18n-placeholder="hero.searchPlaceholder">
                 <svg class="hero__search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -76,27 +102,27 @@
         <div class="container">
             <div class="filters__wrapper">
                 <div class="filter-group">
-                    <label for="regionFilter" class="filter-group__label">Región:</label>
+                    <label for="regionFilter" class="filter-group__label" data-i18n="filters.region">Región:</label>
                     <select id="regionFilter" class="filter-group__select">
-                        <option value="">Todas las regiones</option>
+                        <option value="" data-i18n="filters.allRegions">Todas las regiones</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="rubroFilter" class="filter-group__label">Rubro:</label>
+                    <label for="rubroFilter" class="filter-group__label" data-i18n="filters.rubro">Rubro:</label>
                     <select id="rubroFilter" class="filter-group__select">
-                        <option value="">Todos los rubros</option>
+                        <option value="" data-i18n="filters.allRubros">Todos los rubros</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="comunidadFilter" class="filter-group__label">Comunidad / Pueblo:</label>
+                    <label for="comunidadFilter" class="filter-group__label" data-i18n="filters.community">Comunidad / Pueblo:</label>
                     <select id="comunidadFilter" class="filter-group__select">
-                        <option value="">Todas las comunidades / pueblos</option>
+                        <option value="" data-i18n="filters.allCommunities">Todas las comunidades / pueblos</option>
                     </select>
                 </div>
 
-                <button id="clearFilters" class="btn-clear">
+                <button id="clearFilters" class="btn-clear" data-i18n="filters.clearFilters">
                     Limpiar filtros
                 </button>
             </div>
@@ -114,7 +140,7 @@
                         <rect x="14" y="14" width="7" height="7"></rect>
                         <rect x="3" y="14" width="7" height="7"></rect>
                     </svg>
-                    <span>Grilla</span>
+                    <span data-i18n="views.grid">Grilla</span>
                 </button>
                 <button id="mapViewBtn" class="view-toggle__btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -122,22 +148,22 @@
                         <line x1="8" y1="2" x2="8" y2="18"></line>
                         <line x1="16" y1="6" x2="16" y2="22"></line>
                     </svg>
-                    <span>Mapa</span>
+                    <span data-i18n="views.map">Mapa</span>
                 </button>
             </div>
-            <p class="results-count" id="resultsCount">Cargando emprendimientos...</p>
+            <p class="results-count" id="resultsCount" data-i18n="views.loading">Cargando emprendimientos...</p>
         </div>
 
         <!-- NUEVO: Controles de paginación -->
         <div class="pagination-controls" id="paginationControls" style="display: none;">
             <div class="pagination-controls__left">
-                <label for="itemsPerPage" class="pagination-controls__label">Mostrar:</label>
+                <label for="itemsPerPage" class="pagination-controls__label" data-i18n="pagination.show">Mostrar:</label>
                 <select id="itemsPerPage" class="pagination-controls__select">
-                    <option value="6">6 por página</option>
-                    <option value="12" selected>12 por página</option>
-                    <option value="24">24 por página</option>
-                    <option value="48">48 por página</option>
-                    <option value="all">Todos</option>
+                    <option value="6">6 <span data-i18n="pagination.perPage">por página</span></option>
+                    <option value="12" selected>12 <span data-i18n="pagination.perPage">por página</span></option>
+                    <option value="24">24 <span data-i18n="pagination.perPage">por página</span></option>
+                    <option value="48">48 <span data-i18n="pagination.perPage">por página</span></option>
+                    <option value="all" data-i18n="pagination.all">Todos</option>
                 </select>
             </div>
 
@@ -224,34 +250,34 @@
                 
                 <!-- Leyenda del mapa -->
                 <div class="map-legend">
-                    <h3 class="map-legend__title">Leyenda</h3>
+                    <h3 class="map-legend__title" data-i18n="map.legend">Leyenda</h3>
                     <div class="map-legend__items">
                         <div class="map-legend__item">
                             <img src="./assets/alojamiento-bordo.png" alt="Alojamiento" class="map-legend__icon">
-                            <span class="map-legend__label">Alojamiento</span>
+                            <span class="map-legend__label" data-i18n="map.categories.alojamiento">Alojamiento</span>
                         </div>
                         <div class="map-legend__item">
                             <img src="./assets/artesania-bordo.png" alt="Artesanía" class="map-legend__icon">
-                            <span class="map-legend__label">Artesanía</span>
+                            <span class="map-legend__label" data-i18n="map.categories.artesania">Artesanía</span>
                         </div>
                         <div class="map-legend__item">
                             <img src="./assets/caballo-bordo.png" alt="Paseos a caballo" class="map-legend__icon">
-                            <span class="map-legend__label">Paseos a caballo</span>
+                            <span class="map-legend__label" data-i18n="map.categories.caballo">Paseos a caballo</span>
                         </div>
                         <div class="map-legend__item">
                             <img src="./assets/experiencia-bordo.png" alt="Experiencias" class="map-legend__icon">
-                            <span class="map-legend__label">Experiencias</span>
+                            <span class="map-legend__label" data-i18n="map.categories.experiencia">Experiencias</span>
                         </div>
                         <div class="map-legend__item">
                             <img src="./assets/gastronomia-bordo.png" alt="Gastronomía" class="map-legend__icon">
-                            <span class="map-legend__label">Gastronomía</span>
+                            <span class="map-legend__label" data-i18n="map.categories.gastronomia">Gastronomía</span>
                         </div>
                         <div class="map-legend__item">
                             <img src="./assets/guia-bordo.png" alt="Guías" class="map-legend__icon">
-                            <span class="map-legend__label">Guías</span>
+                            <span class="map-legend__label" data-i18n="map.categories.guia">Guías</span>
                         </div>
                     </div>
-                    <p class="map-legend__note">Los colores de los iconos varían según la región: amarillo (Puna), bordo (Quebrada), verde (Yungas)</p>
+                    <p class="map-legend__note" data-i18n="map.legendNote">Los colores de los iconos varían según la región: amarillo (Puna), bordo (Quebrada), verde (Yungas)</p>
                 </div>
             </div>
         </div>
@@ -267,8 +293,8 @@
         class="footer__logo"
     >
 </a>
-            <p class="footer__text">Turismo Rural Jujuy - 2025</p>
-            <p class="footer__text footer__text--small">Secretaría de Economía Popular - Promoviendo el turismo comunitario y sustentable</p>
+            <p class="footer__text" data-i18n="footer.title">Turismo Rural Jujuy - 2025</p>
+            <p class="footer__text footer__text--small" data-i18n="footer.description">Secretaría de Economía Popular - Promoviendo el turismo comunitario y sustentable</p>
         </div>
     </footer>
 
@@ -306,10 +332,10 @@
                 <div class="ayni-assistant__header-content">
                     <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__header-avatar">
                     <div class="ayni-assistant__header-info">
-                        <h3 class="ayni-assistant__name">Ayni</h3>
+                        <h3 class="ayni-assistant__name" data-i18n="ayni.name">Ayni</h3>
                         <span class="ayni-assistant__status">
                             <span class="ayni-assistant__status-dot"></span>
-                            En línea
+                            <span data-i18n="ayni.online">En línea</span>
                         </span>
                     </div>
                 </div>
@@ -325,7 +351,7 @@
             <div class="ayni-assistant__messages" id="ayniMessages">
                 <div class="ayni-assistant__welcome">
                     <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__welcome-avatar">
-                    <p class="ayni-assistant__welcome-text">
+                    <p class="ayni-assistant__welcome-text" data-i18n-html="ayni.welcome">
                         ¡Hola! Soy <strong>Ayni</strong>, tu asistente de turismo rural en Jujuy. 
                         ¿En qué puedo ayudarte hoy? 🌄
                     </p>
@@ -339,6 +365,7 @@
                     class="ayni-assistant__input" 
                     id="ayniInput"
                     placeholder="Escribe tu mensaje aquí..."
+                    data-i18n-placeholder="ayni.inputPlaceholder"
                     aria-label="Escribe tu mensaje"
                 >
                 <button class="ayni-assistant__send" id="ayniSend" aria-label="Enviar mensaje">
@@ -351,13 +378,13 @@
 
             <!-- Sugerencias rápidas -->
             <div class="ayni-assistant__suggestions" id="ayniSuggestions">
-                <button class="ayni-assistant__suggestion" data-message="¿Qué emprendimientos hay en la Quebrada?">
+                <button class="ayni-assistant__suggestion" data-message-key="quebrada" data-i18n="ayni.suggestions.quebrada">
                     🏔️ Quebrada de Humahuaca
                 </button>
-                <button class="ayni-assistant__suggestion" data-message="Busco alojamiento rural">
+                <button class="ayni-assistant__suggestion" data-message-key="alojamiento" data-i18n="ayni.suggestions.alojamiento">
                     🏠 Alojamiento
                 </button>
-                <button class="ayni-assistant__suggestion" data-message="¿Hay artesanías disponibles?">
+                <button class="ayni-assistant__suggestion" data-message-key="artesanias" data-i18n="ayni.suggestions.artesanias">
                     🎨 Artesanías
                 </button>
             </div>

@@ -33,6 +33,136 @@ body {
   }
 }
 
+.language-selector {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9998;
+}
+@media (max-width: 768px) {
+  .language-selector {
+    top: 15px;
+    right: 15px;
+  }
+}
+.language-selector__button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #8B4513;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  color: #8B4513;
+  font-size: 0.9rem;
+}
+.language-selector__button:hover {
+  background: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 69, 19, 0.2);
+}
+.language-selector__button:active {
+  transform: translateY(0);
+}
+.language-selector__button.active {
+  border-color: #D2691E;
+  background: #F5F5DC;
+}
+@media (max-width: 768px) {
+  .language-selector__button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+}
+.language-selector__icon {
+  width: 20px;
+  height: 20px;
+  stroke: #8B4513;
+}
+@media (max-width: 768px) {
+  .language-selector__icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+.language-selector__current {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.language-selector__dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #FFFFFF;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+.language-selector__dropdown.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.language-selector__option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  width: 100%;
+  border: none;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  text-align: left;
+}
+.language-selector__option:hover {
+  background: #F5F5DC;
+}
+.language-selector__option:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+.language-selector__option.active {
+  background: #DEB887;
+  font-weight: 600;
+}
+.language-selector__flag {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.language-selector__name {
+  font-size: 0.95rem;
+  color: #3E2723;
+}
+
+@keyframes language-change {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.language-changing {
+  animation: language-change 0.5s ease;
+}
+
 .header {
   background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
   color: #FFFFFF;

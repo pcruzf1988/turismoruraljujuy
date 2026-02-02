@@ -1,0 +1,95 @@
+{
+  "language": "es",
+  "languageName": "Español",
+  "hero": {
+    "badge": "Economía Popular",
+    "title": "Descubrí el",
+    "titleHighlight": "Turismo rural",
+    "titleEnd": "de Jujuy",
+    "subtitle": "Una plataforma impulsada por la Secretaría de Economía Popular de Jujuy para conectar emprendedores locales con viajeros conscientes.",
+    "description": "Desde los coloridos mercados de la Quebrada de Humahuaca hasta las cooperativas agrícolas en los valles, conectamos emprendedores locales con viajeros conscientes. Conocé historias de resiliencia, proyectos innovadores y experiencias auténticas que transforman comunidades.",
+    "searchPlaceholder": "Buscar emprendimientos..."
+  },
+  "filters": {
+    "region": "Región:",
+    "allRegions": "Todas las regiones",
+    "rubro": "Rubro:",
+    "allRubros": "Todos los rubros",
+    "community": "Comunidad / Pueblo:",
+    "allCommunities": "Todas las comunidades / pueblos",
+    "clearFilters": "Limpiar filtros"
+  },
+  "views": {
+    "grid": "Grilla",
+    "map": "Mapa",
+    "loading": "Cargando emprendimientos..."
+  },
+  "pagination": {
+    "show": "Mostrar:",
+    "perPage": "por página",
+    "all": "Todos",
+    "page": "Página",
+    "of": "de",
+    "showing": "Mostrando"
+  },
+  "cards": {
+    "viewMore": "Ver más",
+    "noResults": "No se encontraron resultados",
+    "noResultsText": "Intentá con otros filtros o términos de búsqueda",
+    "error": "Error al cargar los datos",
+    "errorText": "Por favor, recargá la página",
+    "resultsCount": "emprendimientos encontrados"
+  },
+  "map": {
+    "legend": "Leyenda",
+    "legendNote": "Los colores de los iconos varían según la región: amarillo (Puna), bordo (Quebrada), verde (Yungas)",
+    "categories": {
+      "alojamiento": "Alojamiento",
+      "artesania": "Artesanía",
+      "caballo": "Paseos a caballo",
+      "experiencia": "Experiencias",
+      "gastronomia": "Gastronomía",
+      "guia": "Guías"
+    }
+  },
+  "footer": {
+    "title": "Turismo Rural Jujuy - 2025",
+    "description": "Secretaría de Economía Popular - Promoviendo el turismo comunitario y sustentable"
+  },
+  "ayni": {
+    "name": "Ayni",
+    "online": "En línea",
+    "inputPlaceholder": "Escribe tu mensaje aquí...",
+    "welcome": "¡Hola! Soy <strong>Ayni</strong>, tu asistente de turismo rural en Jujuy. ¿En qué puedo ayudarte hoy? 🌄",
+    "suggestions": {
+      "quebrada": "🏔️ Quebrada de Humahuaca",
+      "alojamiento": "🏠 Alojamiento",
+      "artesanias": "🎨 Artesanías"
+    },
+    "responses": {
+      "quebrada": "¡La Quebrada de Humahuaca es hermosa! 🏔️ Encontré varios emprendimientos en esa región. ¿Te gustaría ver alojamientos, artesanías o experiencias gastronómicas?",
+      "alojamiento": "🏠 Tenemos varios alojamientos rurales disponibles. Podés filtrar por región usando los filtros en la parte superior. ¿Preferís Quebrada, Puna o Yungas?",
+      "artesania": "🎨 ¡Las artesanías de Jujuy son únicas! Textiles, cerámica, tejidos... Usá el filtro de rubro para ver todos los emprendimientos de artesanía.",
+      "gastronomia": "😋 La gastronomía jujeña es deliciosa. Encontrá emprendimientos gastronómicos usando el filtro de \"Rubro\" y seleccionando Gastronomía.",
+      "puna": "✨ La Puna es un paisaje único en el mundo. Hay emprendimientos de comunidades originarias que ofrecen experiencias auténticas. Filtrá por región \"Puna\" para verlos.",
+      "yungas": "🌿 Las Yungas tienen una biodiversidad increíble. Hay varios emprendimientos de turismo sustentable en esa región. Filtrá por \"Yungas\" para explorarlos.",
+      "mapa": "🗺️ ¡Podés ver todos los emprendimientos en el mapa! Hacé click en el botón \"Mapa\" en la parte superior para cambiar la vista.",
+      "filtro": "🔍 Usá los filtros en la parte superior para buscar por región, rubro o comunidad. También podés usar el buscador para encontrar algo específico.",
+      "gracias": "¡De nada! 😊 Estoy acá para ayudarte a descubrir el turismo rural de Jujuy. ¿Hay algo más que quieras saber?",
+      "hola": "¡Hola! 👋 ¿Cómo puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy?",
+      "default": "Puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy. Podés buscar por región (Quebrada, Puna, Yungas), por rubro (alojamiento, artesanías, gastronomía) o por comunidad específica. ¿Qué te gustaría explorar? 🌄"
+    },
+    "keywords": {
+      "quebrada": ["quebrada", "humahuaca"],
+      "alojamiento": ["alojamiento", "hospedaje", "dormir", "hotel", "hostel"],
+      "artesania": ["artesanía", "artesano", "artesanias"],
+      "gastronomia": ["gastronomía", "comida", "comer", "restaurante"],
+      "puna": ["puna"],
+      "yungas": ["yungas"],
+      "mapa": ["mapa"],
+      "filtro": ["filtro", "buscar"],
+      "gracias": ["gracias", "thank"],
+      "hola": ["hola", "buenos", "buenas", "hi", "hello"]
+    }
+  }
+}

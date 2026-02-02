@@ -1,0 +1,95 @@
+{
+  "language": "fr",
+  "languageName": "Français",
+  "hero": {
+    "badge": "Économie Populaire",
+    "title": "Découvrez le",
+    "titleHighlight": "Tourisme rural",
+    "titleEnd": "de Jujuy",
+    "subtitle": "Une plateforme portée par le Secrétariat d'Économie Populaire de Jujuy pour connecter les entrepreneurs locaux avec des voyageurs conscients.",
+    "description": "Des marchés colorés de la Quebrada de Humahuaca aux coopératives agricoles dans les vallées, nous connectons les entrepreneurs locaux avec des voyageurs conscients. Découvrez des histoires de résilience, des projets innovants et des expériences authentiques qui transforment les communautés.",
+    "searchPlaceholder": "Rechercher des entreprises..."
+  },
+  "filters": {
+    "region": "Région:",
+    "allRegions": "Toutes les régions",
+    "rubro": "Catégorie:",
+    "allRubros": "Toutes les catégories",
+    "community": "Communauté / Village:",
+    "allCommunities": "Toutes les communautés / villages",
+    "clearFilters": "Effacer les filtres"
+  },
+  "views": {
+    "grid": "Grille",
+    "map": "Carte",
+    "loading": "Chargement des entreprises..."
+  },
+  "pagination": {
+    "show": "Afficher:",
+    "perPage": "par page",
+    "all": "Tous",
+    "page": "Page",
+    "of": "de",
+    "showing": "Affichage"
+  },
+  "cards": {
+    "viewMore": "Voir plus",
+    "noResults": "Aucun résultat trouvé",
+    "noResultsText": "Essayez d'autres filtres ou termes de recherche",
+    "error": "Erreur de chargement des données",
+    "errorText": "Veuillez recharger la page",
+    "resultsCount": "entreprises trouvées"
+  },
+  "map": {
+    "legend": "Légende",
+    "legendNote": "Les couleurs des icônes varient selon la région: jaune (Puna), bordeaux (Quebrada), vert (Yungas)",
+    "categories": {
+      "alojamiento": "Hébergement",
+      "artesania": "Artisanat",
+      "caballo": "Promenades à cheval",
+      "experiencia": "Expériences",
+      "gastronomia": "Gastronomie",
+      "guia": "Guides"
+    }
+  },
+  "footer": {
+    "title": "Tourisme Rural Jujuy - 2025",
+    "description": "Secrétariat d'Économie Populaire - Promotion du tourisme communautaire et durable"
+  },
+  "ayni": {
+    "name": "Ayni",
+    "online": "En ligne",
+    "inputPlaceholder": "Tapez votre message ici...",
+    "welcome": "Bonjour! Je suis <strong>Ayni</strong>, votre assistante de tourisme rural à Jujuy. Comment puis-je vous aider aujourd'hui? 🌄",
+    "suggestions": {
+      "quebrada": "🏔️ Quebrada de Humahuaca",
+      "alojamiento": "🏠 Hébergement",
+      "artesanias": "🎨 Artisanat"
+    },
+    "responses": {
+      "quebrada": "La Quebrada de Humahuaca est magnifique! 🏔️ J'ai trouvé plusieurs entreprises dans cette région. Souhaitez-vous voir des hébergements, de l'artisanat ou des expériences gastronomiques?",
+      "alojamiento": "🏠 Nous avons plusieurs hébergements ruraux disponibles. Vous pouvez filtrer par région en utilisant les filtres en haut. Préférez-vous Quebrada, Puna ou Yungas?",
+      "artesania": "🎨 L'artisanat de Jujuy est unique! Textiles, céramiques, tissages... Utilisez le filtre de catégorie pour voir toutes les entreprises d'artisanat.",
+      "gastronomia": "😋 La gastronomie de Jujuy est délicieuse. Trouvez des entreprises gastronomiques en utilisant le filtre \"Catégorie\" et en sélectionnant Gastronomie.",
+      "puna": "✨ La Puna est un paysage unique au monde. Il y a des entreprises de communautés indigènes offrant des expériences authentiques. Filtrez par région \"Puna\" pour les voir.",
+      "yungas": "🌿 Les Yungas ont une biodiversité incroyable. Il y a plusieurs entreprises de tourisme durable dans cette région. Filtrez par \"Yungas\" pour les explorer.",
+      "mapa": "🗺️ Vous pouvez voir toutes les entreprises sur la carte! Cliquez sur le bouton \"Carte\" en haut pour changer la vue.",
+      "filtro": "🔍 Utilisez les filtres en haut pour rechercher par région, catégorie ou communauté. Vous pouvez également utiliser la barre de recherche pour trouver quelque chose de spécifique.",
+      "gracias": "De rien! 😊 Je suis ici pour vous aider à découvrir le tourisme rural de Jujuy. Y a-t-il autre chose que vous aimeriez savoir?",
+      "hola": "Bonjour! 👋 Comment puis-je vous aider à trouver des entreprises de tourisme rural à Jujuy?",
+      "default": "Je peux vous aider à trouver des entreprises de tourisme rural à Jujuy. Vous pouvez rechercher par région (Quebrada, Puna, Yungas), par catégorie (hébergement, artisanat, gastronomie) ou par communauté spécifique. Qu'aimeriez-vous explorer? 🌄"
+    },
+    "keywords": {
+      "quebrada": ["quebrada", "humahuaca"],
+      "alojamiento": ["hébergement", "logement", "dormir", "hôtel", "auberge"],
+      "artesania": ["artisanat", "artisan", "artesania"],
+      "gastronomia": ["gastronomie", "nourriture", "manger", "restaurant"],
+      "puna": ["puna"],
+      "yungas": ["yungas"],
+      "mapa": ["carte"],
+      "filtro": ["filtre", "recherche", "chercher"],
+      "gracias": ["merci", "thanks", "gracias"],
+      "hola": ["bonjour", "salut", "hello", "hola"]
+    }
+  }
+}

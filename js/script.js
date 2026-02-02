@@ -1,3 +1,182 @@
+// ============================================
+// SISTEMA DE INTERNACIONALIZACIÓN (i18n)
+// ============================================
+
+class I18nManager {
+    constructor() {
+        this.currentLang = this.getSavedLanguage() || 'es';
+        this.translations = {};
+        this.initialized = false;
+    }
+
+    async init() {
+        await this.loadTranslations(this.currentLang);
+        this.setupLanguageSelector();
+        this.applyTranslations();
+        this.initialized = true;
+    }
+
+    getSavedLanguage() {
+        return localStorage.getItem('language') || null;
+    }
+
+    saveLanguage(lang) {
+        localStorage.setItem('language', lang);
+    }
+
+    async loadTranslations(lang) {
+        try {
+            const response = await fetch(`./translations/translations-${lang}.json`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            this.translations = await response.json();
+            this.currentLang = lang;
+        } catch (error) {
+            console.error('Error loading translations:', error);
+            // Fallback a español si hay error
+            if (lang !== 'es') {
+                await this.loadTranslations('es');
+            }
+        }
+    }
+
+    async changeLanguage(lang) {
+        if (lang === this.currentLang) return;
+        
+        // Añadir clase de animación
+        document.body.classList.add('language-changing');
+        
+        await this.loadTranslations(lang);
+        this.saveLanguage(lang);
+        this.applyTranslations();
+        
+        // Actualizar selector
+        this.updateLanguageSelector();
+        
+        // Actualizar Ayni si existe
+        if (window.ayniAssistant) {
+            window.ayniAssistant.updateLanguage();
+        }
+        
+        // Remover clase de animación
+        setTimeout(() => {
+            document.body.classList.remove('language-changing');
+        }, 500);
+    }
+
+    setupLanguageSelector() {
+        const selectorBtn = document.getElementById('languageSelectorBtn');
+        const dropdown = document.getElementById('languageDropdown');
+        const options = document.querySelectorAll('.language-selector__option');
+
+        if (!selectorBtn || !dropdown) return;
+
+        // Toggle dropdown
+        selectorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+            selectorBtn.classList.toggle('active');
+        });
+
+        // Cerrar dropdown al hacer click fuera
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('active');
+            selectorBtn.classList.remove('active');
+        });
+
+        // Opciones de idioma
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const lang = option.getAttribute('data-lang');
+                this.changeLanguage(lang);
+                dropdown.classList.remove('active');
+                selectorBtn.classList.remove('active');
+            });
+        });
+
+        // Actualizar selector inicial
+        this.updateLanguageSelector();
+    }
+
+    updateLanguageSelector() {
+        const currentLangEl = document.getElementById('currentLanguage');
+        const options = document.querySelectorAll('.language-selector__option');
+        
+        if (currentLangEl) {
+            currentLangEl.textContent = this.currentLang.toUpperCase();
+        }
+
+        options.forEach(option => {
+            const lang = option.getAttribute('data-lang');
+            if (lang === this.currentLang) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+    }
+
+    applyTranslations() {
+        // Traducir elementos con data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translation = this.getNestedTranslation(key);
+            if (translation) {
+                el.textContent = translation;
+            }
+        });
+
+        // Traducir elementos con data-i18n-html (permite HTML)
+        document.querySelectorAll('[data-i18n-html]').forEach(el => {
+            const key = el.getAttribute('data-i18n-html');
+            const translation = this.getNestedTranslation(key);
+            if (translation) {
+                el.innerHTML = translation;
+            }
+        });
+
+        // Traducir placeholders
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            const translation = this.getNestedTranslation(key);
+            if (translation) {
+                el.placeholder = translation;
+            }
+        });
+    }
+
+    getNestedTranslation(key) {
+        const keys = key.split('.');
+        let value = this.translations;
+        
+        for (const k of keys) {
+            if (value && typeof value === 'object' && k in value) {
+                value = value[k];
+            } else {
+                return null;
+            }
+        }
+        
+        return value;
+    }
+
+    t(key) {
+        return this.getNestedTranslation(key) || key;
+    }
+
+    // Método para obtener las traducciones de Ayni
+    getAyniTranslations() {
+        return this.translations.ayni || {};
+    }
+}
+
+// Instancia global del gestor de idiomas
+const i18n = new I18nManager();
+
+// ============================================
+// CÓDIGO ORIGINAL
+// ============================================
+
 // URL del CSV publicado
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5gGiVAH3mV0ItZZzhpIWCt7CXKbX6UqSpJy76teHK-o6hKeIYeu1p-I1NhFjNxvP0E/pub?gid=0&single=true&output=csv';
 
@@ -282,26 +461,26 @@ function actualizarPaginacion() {
     
     // Actualizar info de página (superior)
     if (pageInfo) {
-        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+        pageInfo.textContent = `${i18n.t('pagination.page')} ${currentPage} ${i18n.t('pagination.of')} ${totalPages}`;
     }
     
     // Actualizar info de página (inferior)
     if (pageInfoBottom) {
-        pageInfoBottom.textContent = `Página ${currentPage} de ${totalPages}`;
+        pageInfoBottom.textContent = `${i18n.t('pagination.page')} ${currentPage} ${i18n.t('pagination.of')} ${totalPages}`;
     }
     
     // Actualizar rango de elementos mostrados (superior)
     if (rangeInfo) {
         const startIndex = (currentPage - 1) * itemsPerPage + 1;
         const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
-        rangeInfo.textContent = `${startIndex}-${endIndex} de ${emprendimientosFiltrados.length}`;
+        rangeInfo.textContent = `${startIndex}-${endIndex} ${i18n.t('pagination.of')} ${emprendimientosFiltrados.length}`;
     }
     
     // Actualizar rango de elementos mostrados (inferior)
     if (rangeInfoBottom) {
         const startIndex = (currentPage - 1) * itemsPerPage + 1;
         const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
-        rangeInfoBottom.textContent = `${startIndex}-${endIndex} de ${emprendimientosFiltrados.length}`;
+        rangeInfoBottom.textContent = `${startIndex}-${endIndex} ${i18n.t('pagination.of')} ${emprendimientosFiltrados.length}`;
     }
     
     // Habilitar/deshabilitar botones superiores
@@ -459,7 +638,7 @@ function crearCard(emp) {
                 <line x1="12" y1="8" x2="12" y2="16"></line>
                 <line x1="8" y1="12" x2="16" y2="12"></line>
             </svg>
-            <span>Ver más</span>
+            <span>${i18n.t('cards.viewMore')}</span>
         </div>
     </div>
     <div class="emprendimiento-card__content">
@@ -550,8 +729,8 @@ function mostrarEstadoVacio() {
     emprendimientosGrid.innerHTML = `
         <div class="empty-state">
             <div class="empty-state__icon">🔍</div>
-            <h3 class="empty-state__title">No se encontraron resultados</h3>
-            <p class="empty-state__text">Intentá con otros filtros o términos de búsqueda</p>
+            <h3 class="empty-state__title">${i18n.t('cards.noResults')}</h3>
+            <p class="empty-state__text">${i18n.t('cards.noResultsText')}</p>
         </div>
     `;
 }
@@ -561,11 +740,11 @@ function mostrarError() {
     emprendimientosGrid.innerHTML = `
         <div class="empty-state">
             <div class="empty-state__icon">⚠️</div>
-            <h3 class="empty-state__title">Error al cargar los datos</h3>
-            <p class="empty-state__text">Por favor, recargá la página</p>
+            <h3 class="empty-state__title">${i18n.t('cards.error')}</h3>
+            <p class="empty-state__text">${i18n.t('cards.errorText')}</p>
         </div>
     `;
-    resultsCount.textContent = 'Error al cargar emprendimientos';
+    resultsCount.textContent = i18n.t('cards.error');
 }
 
 // Función para actualizar el contador
@@ -573,10 +752,12 @@ function actualizarContador() {
     const total = emprendimientos.length;
     const mostrados = emprendimientosFiltrados.length;
     
+    const countText = i18n.t('cards.resultsCount');
+    
     if (mostrados === total) {
-        resultsCount.textContent = `Mostrando ${total} emprendimiento${total !== 1 ? 's' : ''}`;
+        resultsCount.textContent = `${i18n.t('pagination.showing')} ${total} ${countText}`;
     } else {
-        resultsCount.textContent = `Mostrando ${mostrados} de ${total} emprendimiento${total !== 1 ? 's' : ''}`;
+        resultsCount.textContent = `${i18n.t('pagination.showing')} ${mostrados} ${i18n.t('pagination.of')} ${total} ${countText}`;
     }
 }
 
@@ -1424,8 +1605,11 @@ class AyniAssistant {
     }
     
     handleSuggestion(e) {
-        const message = e.currentTarget.getAttribute('data-message');
-        if (message) {
+        const messageKey = e.currentTarget.getAttribute('data-message-key');
+        if (messageKey) {
+            // Obtener el mensaje traducido de las sugerencias
+            const ayniT = i18n.getAyniTranslations();
+            const message = ayniT.suggestions?.[messageKey] || messageKey;
             this.sendMessage(message);
             this.hideSuggestions();
         }
@@ -1504,50 +1688,72 @@ class AyniAssistant {
     
     generateResponse(message) {
         const lowerMessage = message.toLowerCase();
+        const ayniT = i18n.getAyniTranslations();
         
-        // Respuestas contextuales basadas en palabras clave
-        if (lowerMessage.includes('quebrada') || lowerMessage.includes('humahuaca')) {
-            return '¡La Quebrada de Humahuaca es hermosa! 🏔️ Encontré varios emprendimientos en esa región. ¿Te gustaría ver alojamientos, artesanías o experiencias gastronómicas?';
+        // Obtener keywords y respuestas del idioma actual
+        const keywords = ayniT.keywords || {};
+        const responses = ayniT.responses || {};
+        
+        // Función helper para verificar keywords
+        const matchesKeywords = (keywordArray) => {
+            return keywordArray && keywordArray.some(keyword => 
+                lowerMessage.includes(keyword.toLowerCase())
+            );
+        };
+        
+        // Verificar cada categoría de keywords
+        if (matchesKeywords(keywords.quebrada)) {
+            return responses.quebrada || responses.default;
         }
         
-        if (lowerMessage.includes('alojamiento') || lowerMessage.includes('hospedaje') || lowerMessage.includes('dormir')) {
-            return '🏠 Tenemos varios alojamientos rurales disponibles. Podés filtrar por región usando los filtros en la parte superior. ¿Preferís Quebrada, Puna o Yungas?';
+        if (matchesKeywords(keywords.alojamiento)) {
+            return responses.alojamiento || responses.default;
         }
         
-        if (lowerMessage.includes('artesanía') || lowerMessage.includes('artesano')) {
-            return '🎨 ¡Las artesanías de Jujuy son únicas! Textiles, cerámica, tejidos... Usá el filtro de rubro para ver todos los emprendimientos de artesanía.';
+        if (matchesKeywords(keywords.artesania)) {
+            return responses.artesania || responses.default;
         }
         
-        if (lowerMessage.includes('gastronomía') || lowerMessage.includes('comida') || lowerMessage.includes('comer')) {
-            return '😋 La gastronomía jujeña es deliciosa. Encontrá emprendimientos gastronómicos usando el filtro de "Rubro" y seleccionando Gastronomía.';
+        if (matchesKeywords(keywords.gastronomia)) {
+            return responses.gastronomia || responses.default;
         }
         
-        if (lowerMessage.includes('puna')) {
-            return '✨ La Puna es un paisaje único en el mundo. Hay emprendimientos de comunidades originarias que ofrecen experiencias auténticas. Filtrá por región "Puna" para verlos.';
+        if (matchesKeywords(keywords.puna)) {
+            return responses.puna || responses.default;
         }
         
-        if (lowerMessage.includes('yungas')) {
-            return '🌿 Las Yungas tienen una biodiversidad increíble. Hay varios emprendimientos de turismo sustentable en esa región. Filtrá por "Yungas" para explorarlos.';
+        if (matchesKeywords(keywords.yungas)) {
+            return responses.yungas || responses.default;
         }
         
-        if (lowerMessage.includes('mapa')) {
-            return '🗺️ ¡Podés ver todos los emprendimientos en el mapa! Hacé click en el botón "Mapa" en la parte superior para cambiar la vista.';
+        if (matchesKeywords(keywords.mapa)) {
+            return responses.mapa || responses.default;
         }
         
-        if (lowerMessage.includes('filtro') || lowerMessage.includes('buscar')) {
-            return '🔍 Usá los filtros en la parte superior para buscar por región, rubro o comunidad. También podés usar el buscador para encontrar algo específico.';
+        if (matchesKeywords(keywords.filtro)) {
+            return responses.filtro || responses.default;
         }
         
-        if (lowerMessage.includes('gracias') || lowerMessage.includes('thank')) {
-            return '¡De nada! 😊 Estoy acá para ayudarte a descubrir el turismo rural de Jujuy. ¿Hay algo más que quieras saber?';
+        if (matchesKeywords(keywords.gracias)) {
+            return responses.gracias || responses.default;
         }
         
-        if (lowerMessage.includes('hola') || lowerMessage.includes('buenos') || lowerMessage.includes('buenas')) {
-            return '¡Hola! 👋 ¿Cómo puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy?';
+        if (matchesKeywords(keywords.hola)) {
+            return responses.hola || responses.default;
         }
         
         // Respuesta por defecto
-        return 'Puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy. Podés buscar por región (Quebrada, Puna, Yungas), por rubro (alojamiento, artesanías, gastronomía) o por comunidad específica. ¿Qué te gustaría explorar? 🌄';
+        return responses.default || 'How can I help you?';
+    }
+    
+    updateLanguage() {
+        // Este método se llama cuando cambia el idioma
+        // Actualiza el mensaje de bienvenida si la ventana está abierta
+        const welcomeText = document.querySelector('.ayni-assistant__welcome-text');
+        if (welcomeText) {
+            const ayniT = i18n.getAyniTranslations();
+            welcomeText.innerHTML = ayniT.welcome || '';
+        }
     }
     
     escapeHtml(text) {
@@ -1579,7 +1785,11 @@ class AyniAssistant {
     }
 }
 
-// Inicializar Ayni cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
+// Inicializar i18n y Ayni cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', async () => {
+    // Inicializar sistema de internacionalización
+    await i18n.init();
+    
+    // Inicializar asistente Ayni
     window.ayniAssistant = new AyniAssistant();
 });
