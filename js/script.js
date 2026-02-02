@@ -1326,3 +1326,260 @@ renderizarEmprendimientos = function() {
         initLazyLoading();
     }, 0);
 };
+
+// ============================================
+// ASISTENTE VIRTUAL AYNI
+// ============================================
+
+class AyniAssistant {
+    constructor() {
+        // Elementos del DOM
+        this.button = document.getElementById('ayniButton');
+        this.chat = document.getElementById('ayniChat');
+        this.closeBtn = document.getElementById('ayniClose');
+        this.messagesContainer = document.getElementById('ayniMessages');
+        this.input = document.getElementById('ayniInput');
+        this.sendBtn = document.getElementById('ayniSend');
+        this.badge = document.getElementById('ayniBadge');
+        this.suggestionsContainer = document.getElementById('ayniSuggestions');
+        
+        // Estado
+        this.isOpen = false;
+        this.isTyping = false;
+        this.messageQueue = [];
+        
+        // Bind methods
+        this.toggle = this.toggle.bind(this);
+        this.close = this.close.bind(this);
+        this.handleSend = this.handleSend.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+        this.handleSuggestion = this.handleSuggestion.bind(this);
+        
+        // Inicializar
+        this.init();
+    }
+    
+    init() {
+        // Event listeners
+        this.button.addEventListener('click', this.toggle);
+        this.closeBtn.addEventListener('click', this.close);
+        this.sendBtn.addEventListener('click', this.handleSend);
+        this.input.addEventListener('keypress', this.handleKeyPress);
+        
+        // Sugerencias rápidas
+        const suggestions = this.suggestionsContainer.querySelectorAll('.ayni-assistant__suggestion');
+        suggestions.forEach(suggestion => {
+            suggestion.addEventListener('click', this.handleSuggestion);
+        });
+        
+        // Mostrar badge inicial después de 3 segundos
+        setTimeout(() => {
+            this.showBadge(1);
+        }, 3000);
+    }
+    
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    }
+    
+    open() {
+        this.isOpen = true;
+        this.chat.classList.add('active');
+        this.button.classList.add('active');
+        this.hideBadge();
+        
+        // Focus en el input
+        setTimeout(() => {
+            this.input.focus();
+        }, 300);
+        
+        // Animación del botón
+        setTimeout(() => {
+            this.button.classList.remove('active');
+        }, 500);
+    }
+    
+    close() {
+        this.isOpen = false;
+        this.chat.classList.remove('active');
+    }
+    
+    handleKeyPress(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.handleSend();
+        }
+    }
+    
+    handleSend() {
+        const message = this.input.value.trim();
+        if (message && !this.isTyping) {
+            this.sendMessage(message);
+            this.input.value = '';
+        }
+    }
+    
+    handleSuggestion(e) {
+        const message = e.currentTarget.getAttribute('data-message');
+        if (message) {
+            this.sendMessage(message);
+            this.hideSuggestions();
+        }
+    }
+    
+    sendMessage(text) {
+        // Agregar mensaje del usuario
+        this.addMessage(text, 'user');
+        
+        // Ocultar sugerencias después del primer mensaje
+        this.hideSuggestions();
+        
+        // Simular respuesta de Ayni
+        this.showTyping();
+        
+        // Respuesta simulada basada en el mensaje
+        setTimeout(() => {
+            const response = this.generateResponse(text);
+            this.hideTyping();
+            this.addMessage(response, 'assistant');
+        }, 1500 + Math.random() * 1000);
+    }
+    
+    addMessage(text, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `ayni-assistant__message ayni-assistant__message--${type}`;
+        
+        const avatar = type === 'assistant' ? `
+            <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__message-avatar">
+        ` : '';
+        
+        const time = new Date().toLocaleTimeString('es-AR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        messageDiv.innerHTML = `
+            ${avatar}
+            <div>
+                <div class="ayni-assistant__message-bubble">${this.escapeHtml(text)}</div>
+                <div class="ayni-assistant__message-time">${time}</div>
+            </div>
+        `;
+        
+        this.messagesContainer.appendChild(messageDiv);
+        this.scrollToBottom();
+    }
+    
+    showTyping() {
+        this.isTyping = true;
+        
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'ayni-assistant__typing';
+        typingDiv.id = 'ayniTyping';
+        
+        typingDiv.innerHTML = `
+            <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__message-avatar">
+            <div class="ayni-assistant__typing-bubble">
+                <div class="ayni-assistant__typing-dot"></div>
+                <div class="ayni-assistant__typing-dot"></div>
+                <div class="ayni-assistant__typing-dot"></div>
+            </div>
+        `;
+        
+        this.messagesContainer.appendChild(typingDiv);
+        this.scrollToBottom();
+    }
+    
+    hideTyping() {
+        this.isTyping = false;
+        const typingDiv = document.getElementById('ayniTyping');
+        if (typingDiv) {
+            typingDiv.remove();
+        }
+    }
+    
+    generateResponse(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Respuestas contextuales basadas en palabras clave
+        if (lowerMessage.includes('quebrada') || lowerMessage.includes('humahuaca')) {
+            return '¡La Quebrada de Humahuaca es hermosa! 🏔️ Encontré varios emprendimientos en esa región. ¿Te gustaría ver alojamientos, artesanías o experiencias gastronómicas?';
+        }
+        
+        if (lowerMessage.includes('alojamiento') || lowerMessage.includes('hospedaje') || lowerMessage.includes('dormir')) {
+            return '🏠 Tenemos varios alojamientos rurales disponibles. Podés filtrar por región usando los filtros en la parte superior. ¿Preferís Quebrada, Puna o Yungas?';
+        }
+        
+        if (lowerMessage.includes('artesanía') || lowerMessage.includes('artesano')) {
+            return '🎨 ¡Las artesanías de Jujuy son únicas! Textiles, cerámica, tejidos... Usá el filtro de rubro para ver todos los emprendimientos de artesanía.';
+        }
+        
+        if (lowerMessage.includes('gastronomía') || lowerMessage.includes('comida') || lowerMessage.includes('comer')) {
+            return '😋 La gastronomía jujeña es deliciosa. Encontrá emprendimientos gastronómicos usando el filtro de "Rubro" y seleccionando Gastronomía.';
+        }
+        
+        if (lowerMessage.includes('puna')) {
+            return '✨ La Puna es un paisaje único en el mundo. Hay emprendimientos de comunidades originarias que ofrecen experiencias auténticas. Filtrá por región "Puna" para verlos.';
+        }
+        
+        if (lowerMessage.includes('yungas')) {
+            return '🌿 Las Yungas tienen una biodiversidad increíble. Hay varios emprendimientos de turismo sustentable en esa región. Filtrá por "Yungas" para explorarlos.';
+        }
+        
+        if (lowerMessage.includes('mapa')) {
+            return '🗺️ ¡Podés ver todos los emprendimientos en el mapa! Hacé click en el botón "Mapa" en la parte superior para cambiar la vista.';
+        }
+        
+        if (lowerMessage.includes('filtro') || lowerMessage.includes('buscar')) {
+            return '🔍 Usá los filtros en la parte superior para buscar por región, rubro o comunidad. También podés usar el buscador para encontrar algo específico.';
+        }
+        
+        if (lowerMessage.includes('gracias') || lowerMessage.includes('thank')) {
+            return '¡De nada! 😊 Estoy acá para ayudarte a descubrir el turismo rural de Jujuy. ¿Hay algo más que quieras saber?';
+        }
+        
+        if (lowerMessage.includes('hola') || lowerMessage.includes('buenos') || lowerMessage.includes('buenas')) {
+            return '¡Hola! 👋 ¿Cómo puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy?';
+        }
+        
+        // Respuesta por defecto
+        return 'Puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy. Podés buscar por región (Quebrada, Puna, Yungas), por rubro (alojamiento, artesanías, gastronomía) o por comunidad específica. ¿Qué te gustaría explorar? 🌄';
+    }
+    
+    escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    
+    scrollToBottom() {
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+    
+    showBadge(count) {
+        this.badge.textContent = count;
+        this.badge.classList.remove('hidden');
+    }
+    
+    hideBadge() {
+        this.badge.classList.add('hidden');
+    }
+    
+    hideSuggestions() {
+        this.suggestionsContainer.classList.add('hidden');
+    }
+}
+
+// Inicializar Ayni cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    window.ayniAssistant = new AyniAssistant();
+});

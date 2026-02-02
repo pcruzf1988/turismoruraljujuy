@@ -290,6 +290,80 @@
         </div>
     </div>
 
+    <!-- Asistente Virtual Ayni -->
+    <div class="ayni-assistant" id="ayniAssistant">
+        <!-- Botón flotante -->
+        <button class="ayni-assistant__button" id="ayniButton" aria-label="Abrir asistente Ayni">
+            <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__avatar">
+            <span class="ayni-assistant__badge" id="ayniBadge">1</span>
+            <div class="ayni-assistant__pulse"></div>
+        </button>
+
+        <!-- Ventana de chat -->
+        <div class="ayni-assistant__chat" id="ayniChat">
+            <!-- Header del chat -->
+            <div class="ayni-assistant__header">
+                <div class="ayni-assistant__header-content">
+                    <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__header-avatar">
+                    <div class="ayni-assistant__header-info">
+                        <h3 class="ayni-assistant__name">Ayni</h3>
+                        <span class="ayni-assistant__status">
+                            <span class="ayni-assistant__status-dot"></span>
+                            En línea
+                        </span>
+                    </div>
+                </div>
+                <button class="ayni-assistant__close" id="ayniClose" aria-label="Cerrar chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mensajes -->
+            <div class="ayni-assistant__messages" id="ayniMessages">
+                <div class="ayni-assistant__welcome">
+                    <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__welcome-avatar">
+                    <p class="ayni-assistant__welcome-text">
+                        ¡Hola! Soy <strong>Ayni</strong>, tu asistente de turismo rural en Jujuy. 
+                        ¿En qué puedo ayudarte hoy? 🌄
+                    </p>
+                </div>
+            </div>
+
+            <!-- Input de mensaje -->
+            <div class="ayni-assistant__input-wrapper">
+                <input 
+                    type="text" 
+                    class="ayni-assistant__input" 
+                    id="ayniInput"
+                    placeholder="Escribe tu mensaje aquí..."
+                    aria-label="Escribe tu mensaje"
+                >
+                <button class="ayni-assistant__send" id="ayniSend" aria-label="Enviar mensaje">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Sugerencias rápidas -->
+            <div class="ayni-assistant__suggestions" id="ayniSuggestions">
+                <button class="ayni-assistant__suggestion" data-message="¿Qué emprendimientos hay en la Quebrada?">
+                    🏔️ Quebrada de Humahuaca
+                </button>
+                <button class="ayni-assistant__suggestion" data-message="Busco alojamiento rural">
+                    🏠 Alojamiento
+                </button>
+                <button class="ayni-assistant__suggestion" data-message="¿Hay artesanías disponibles?">
+                    🎨 Artesanías
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

@@ -1583,4 +1583,472 @@ body {
   opacity: 1;
 }
 
+@keyframes ayni-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes ayni-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+@keyframes ayni-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+@keyframes ayni-wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+@keyframes ayni-typing {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes ayni-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ayni-badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+.ayni-assistant {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+@media (max-width: 768px) {
+  .ayni-assistant {
+    bottom: 15px;
+    right: 15px;
+  }
+}
+.ayni-assistant__button {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(139, 69, 19, 0.4);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: ayni-float 3s ease-in-out infinite;
+  padding: 0;
+  overflow: visible;
+}
+.ayni-assistant__button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(139, 69, 19, 0.5);
+  animation: ayni-bounce 0.6s ease;
+}
+.ayni-assistant__button:hover .ayni-assistant__avatar {
+  transform: scale(1.05);
+}
+.ayni-assistant__button:active {
+  transform: translateY(-3px) scale(0.95);
+}
+.ayni-assistant__button.active {
+  animation: ayni-wiggle 0.5s ease;
+}
+@media (max-width: 768px) {
+  .ayni-assistant__button {
+    width: 60px;
+    height: 60px;
+  }
+}
+.ayni-assistant__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  border: 3px solid #FFFFFF;
+}
+.ayni-assistant__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #e74c3c;
+  color: #FFFFFF;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
+  animation: ayni-badge-pulse 2s ease-in-out infinite;
+  border: 2px solid #FFFFFF;
+}
+.ayni-assistant__badge.hidden {
+  display: none;
+}
+.ayni-assistant__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+  transform: translate(-50%, -50%);
+  animation: ayni-pulse 2s ease-out infinite;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.ayni-assistant__chat {
+  position: absolute;
+  bottom: 85px;
+  right: 0;
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  height: 550px;
+  max-height: calc(100vh - 120px);
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  overflow: hidden;
+}
+.ayni-assistant__chat.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+@media (max-width: 768px) {
+  .ayni-assistant__chat {
+    width: calc(100vw - 30px);
+    height: calc(100vh - 100px);
+    bottom: 80px;
+  }
+}
+.ayni-assistant__header {
+  background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+  color: #FFFFFF;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.ayni-assistant__header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ayni-assistant__header-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #FFFFFF;
+  animation: ayni-float 3s ease-in-out infinite;
+}
+.ayni-assistant__header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ayni-assistant__name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.2;
+}
+.ayni-assistant__status {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ayni-assistant__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  animation: ayni-badge-pulse 2s ease-in-out infinite;
+}
+.ayni-assistant__close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #FFFFFF;
+}
+.ayni-assistant__close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+.ayni-assistant__close svg {
+  width: 18px;
+  height: 18px;
+}
+.ayni-assistant__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: linear-gradient(to bottom, #fafafa 0%, #FFFFFF 100%);
+}
+.ayni-assistant__messages::-webkit-scrollbar {
+  width: 6px;
+}
+.ayni-assistant__messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.ayni-assistant__messages::-webkit-scrollbar-thumb {
+  background: #CD853F;
+  border-radius: 10px;
+}
+.ayni-assistant__messages::-webkit-scrollbar-thumb:hover {
+  background: #D2691E;
+}
+.ayni-assistant__welcome {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  animation: ayni-slide-up 0.5s ease;
+  background: #F5F5DC;
+  padding: 15px;
+  border-radius: 15px;
+  border: 2px solid #DEB887;
+}
+.ayni-assistant__welcome-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #8B4513;
+  flex-shrink: 0;
+}
+.ayni-assistant__welcome-text {
+  margin: 0;
+  line-height: 1.6;
+  color: #3E2723;
+  font-size: 0.95rem;
+}
+.ayni-assistant__welcome-text strong {
+  color: #8B4513;
+  font-weight: 600;
+}
+.ayni-assistant__message {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  animation: ayni-slide-up 0.4s ease;
+}
+.ayni-assistant__message--user {
+  flex-direction: row-reverse;
+}
+.ayni-assistant__message--user .ayni-assistant__message-bubble {
+  background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+  color: #FFFFFF;
+  border-bottom-right-radius: 5px;
+}
+.ayni-assistant__message--assistant .ayni-assistant__message-bubble {
+  background: #F5F5DC;
+  color: #3E2723;
+  border: 1px solid #DEB887;
+  border-bottom-left-radius: 5px;
+}
+.ayni-assistant__message-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #8B4513;
+  flex-shrink: 0;
+}
+.ayni-assistant__message-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+}
+.ayni-assistant__message-time {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+.ayni-assistant__typing {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  animation: ayni-slide-up 0.4s ease;
+}
+.ayni-assistant__typing.hidden {
+  display: none;
+}
+.ayni-assistant__typing-bubble {
+  background: #F5F5DC;
+  border: 1px solid #DEB887;
+  padding: 12px 16px;
+  border-radius: 18px;
+  border-bottom-left-radius: 5px;
+  display: flex;
+  gap: 4px;
+}
+.ayni-assistant__typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #D2691E;
+  animation: ayni-typing 1.4s ease-in-out infinite;
+}
+.ayni-assistant__typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.ayni-assistant__typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.ayni-assistant__input-wrapper {
+  display: flex;
+  gap: 10px;
+  padding: 15px 20px;
+  background: #FFFFFF;
+  border-top: 1px solid #e0e0e0;
+}
+.ayni-assistant__input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #DEB887;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.3s ease;
+  outline: none;
+}
+.ayni-assistant__input:focus {
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+.ayni-assistant__input::placeholder {
+  color: #999;
+}
+.ayni-assistant__send {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.ayni-assistant__send:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+.ayni-assistant__send:active {
+  transform: scale(0.95);
+}
+.ayni-assistant__send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: scale(1);
+}
+.ayni-assistant__send svg {
+  width: 20px;
+  height: 20px;
+}
+.ayni-assistant__suggestions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px 15px;
+  overflow-x: auto;
+  background: #FFFFFF;
+}
+.ayni-assistant__suggestions::-webkit-scrollbar {
+  height: 4px;
+}
+.ayni-assistant__suggestions::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.ayni-assistant__suggestions::-webkit-scrollbar-thumb {
+  background: #CD853F;
+  border-radius: 10px;
+}
+.ayni-assistant__suggestions.hidden {
+  display: none;
+}
+.ayni-assistant__suggestion {
+  padding: 8px 16px;
+  background: #F5F5DC;
+  border: 1px solid #DEB887;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  color: #3E2723;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+.ayni-assistant__suggestion:hover {
+  background: #DEB887;
+  border-color: #D2691E;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.ayni-assistant__suggestion:active {
+  transform: translateY(0);
+}
+
 /*# sourceMappingURL=styles.css.map */
