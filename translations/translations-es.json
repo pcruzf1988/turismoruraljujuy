@@ -7,10 +7,7 @@
     "titleHighlight": "Turismo rural",
     "titleEnd": "de Jujuy",
     "subtitle": "Una plataforma impulsada por la Secretaría de Economía Popular de Jujuy para conectar emprendedores locales con viajeros conscientes.",
-    "description": "Conocé emprendimientos locales que abren sus puertas para compartir la vida rural jujeña.
-Gastronomía andina elaborada con recetas ancestrales, experiencias vivenciales en el campo, talleres de artesanías, productos con identidad local, caminatas, trekkings y cabalgatas en entornos naturales únicos.
-Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna, la Quebrada y las Yungas, acompañados por quienes habitan y cuidan estos territorios.",
-    "searchPlaceholder": "Buscar emprendimientos..."
+    "description": "Conocé emprendimientos locales que abren sus puertas para compartir la vida rural jujeña. Gastronomía andina elaborada con recetas ancestrales, experiencias vivenciales en el campo, talleres de artesanías, productos con identidad local, caminatas, trekkings y cabalgatas en entornos naturales únicos. Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna, la Quebrada y las Yungas, acompañados por quienes habitan y cuidan estos territorios.","searchPlaceholder": "Buscar emprendimientos..."
   },
   "filters": {
     "region": "Región:",
@@ -82,16 +79,52 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
       "default": "Puedo ayudarte a encontrar emprendimientos de turismo rural en Jujuy. Podés buscar por región (Quebrada, Puna, Yungas), por rubro (alojamiento, artesanías, gastronomía) o por comunidad específica. ¿Qué te gustaría explorar? 🌄"
     },
     "keywords": {
-      "quebrada": ["quebrada", "humahuaca"],
-      "alojamiento": ["alojamiento", "hospedaje", "dormir", "hotel", "hostel"],
-      "artesania": ["artesanía", "artesano", "artesanias"],
-      "gastronomia": ["gastronomía", "comida", "comer", "restaurante"],
-      "puna": ["puna"],
-      "yungas": ["yungas"],
-      "mapa": ["mapa"],
-      "filtro": ["filtro", "buscar"],
-      "gracias": ["gracias", "thank"],
-      "hola": ["hola", "buenos", "buenas", "hi", "hello"]
+      "quebrada": [
+        "quebrada",
+        "humahuaca"
+      ],
+      "alojamiento": [
+        "alojamiento",
+        "hospedaje",
+        "dormir",
+        "hotel",
+        "hostel"
+      ],
+      "artesania": [
+        "artesanía",
+        "artesano",
+        "artesanias"
+      ],
+      "gastronomia": [
+        "gastronomía",
+        "comida",
+        "comer",
+        "restaurante"
+      ],
+      "puna": [
+        "puna"
+      ],
+      "yungas": [
+        "yungas"
+      ],
+      "mapa": [
+        "mapa"
+      ],
+      "filtro": [
+        "filtro",
+        "buscar"
+      ],
+      "gracias": [
+        "gracias",
+        "thank"
+      ],
+      "hola": [
+        "hola",
+        "buenos",
+        "buenas",
+        "hi",
+        "hello"
+      ]
     }
   }
 }
