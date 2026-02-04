@@ -42,7 +42,9 @@ body {
 @media (max-width: 768px) {
   .language-selector {
     top: 15px;
-    right: 15px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
   }
 }
 .language-selector__button {

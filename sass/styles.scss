@@ -76,9 +76,11 @@ body {
     z-index: 9998;
     
     @media (max-width: 768px) {
-        top: 15px;
-        right: 15px;
-    }
+    top: 15px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+}
 
     &__button {
         display: flex;
