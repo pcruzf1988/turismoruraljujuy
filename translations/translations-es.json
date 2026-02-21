@@ -55,6 +55,13 @@
     "title": "Turismo Rural Jujuy - 2025",
     "description": "Secretaría de Economía Popular - Promoviendo el turismo comunitario y sustentable"
   },
+  "modal": {
+    "description": "Descripción",
+    "infoConditions": "Información y Condiciones",
+    "viewDetails": "Ver detalles",
+    "howToGet": "Cómo llegar",
+    "website": "Sitio Web"
+  },
   "ayni": {
     "name": "Ayni",
     "online": "En línea",

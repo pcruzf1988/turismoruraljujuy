@@ -12,7 +12,7 @@ $white: #FFFFFF;
 $shadow: rgba(0, 0, 0, 0.1);
 
 // Variables de tipografía
-$font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+$font-primary: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
 // Mixins
 @mixin transition($property: all, $duration: 0.3s) {
@@ -683,7 +683,7 @@ body {
 }
 
 // Animaciones
-@keyframes fadeIn {
+@keyframes cardFadeIn {
     from {
         opacity: 0;
         transform: translateY(20px);
@@ -695,8 +695,17 @@ body {
     }
 }
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 .emprendimiento-card {
-    animation: fadeIn 0.5s ease forwards;
+    animation: cardFadeIn 0.5s ease forwards;
 }
 
 // Responsive
@@ -1270,122 +1279,122 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
             text-align: center;
             width: 100%;
         }
-        }
+    }
 
-        &__scroll-icon {
-            width: 24px;
-            height: 40px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            position: relative;
+    &__scroll-icon {
+        width: 24px;
+        height: 40px;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        position: relative;
 
-            &::before {
-                content: '';
-                position: absolute;
-                top: 8px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 4px;
-                height: 8px;
-                background: rgba(255, 255, 255, 0.7);
-                border-radius: 2px;
-                animation: scrollBounce 2s ease infinite;
-            }
-        }
-
-        // Elementos decorativos flotantes
-        &__decoration {
+        &::before {
+            content: '';
             position: absolute;
-            z-index: 4;
-            pointer-events: none;
-
-            &--1 {
-                top: 15%;
-                left: 8%;
-                width: 120px;
-                height: 120px;
-                background: radial-gradient(circle, rgba(205, 133, 63, 0.15) 0%, transparent 70%);
-                border-radius: 50%;
-                animation: float 8s ease-in-out infinite;
-            }
-
-            &--2 {
-                bottom: 20%;
-                right: 10%;
-                width: 80px;
-                height: 80px;
-                background: radial-gradient(circle, rgba(74, 124, 89, 0.15) 0%, transparent 70%);
-                border-radius: 50%;
-                animation: float 6s ease-in-out infinite 1s;
-            }
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 2px;
+            animation: scrollBounce 2s ease infinite;
         }
+    }
+
+    // Elementos decorativos flotantes
+    &__decoration {
+        position: absolute;
+        z-index: 4;
+        pointer-events: none;
+
+        &--1 {
+            top: 15%;
+            left: 8%;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(205, 133, 63, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        &--2 {
+            bottom: 20%;
+            right: 10%;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(74, 124, 89, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite 1s;
+        }
+    }
 
         // Responsive del hero
         @media (max-width: 768px) {
             min-height: 100vh;
 
-            .hero__content {
+            &__content {
                 padding: 100px 25px 100px;
             }
 
-            .hero__badge {
+            &__badge {
                 padding: 10px 22px;
                 font-size: 0.8rem;
                 margin-bottom: 30px;
             }
 
-            .hero__title {
+            &__title {
                 margin-bottom: 20px;
             }
 
-            .hero__title-highlight::after {
+            &__title-highlight::after {
                 height: 8px;
                 bottom: 5px;
             }
 
-            .hero__subtitle {
+            &__subtitle {
                 margin-bottom: 20px;
             }
 
-            .hero__description {
+            &__description {
                 margin-bottom: 35px;
             }
 
-            .hero__search {
+            &__search {
                 max-width: 100%;
             }
 
-            .hero__search-input {
+            &__search-input {
                 padding: 16px 50px 16px 20px;
                 font-size: 0.95rem;
             }
 
-            .hero__search-icon {
+            &__search-icon {
                 right: 20px;
             }
 
-            .hero__decoration--1,
-            .hero__decoration--2 {
+            &__decoration--1,
+            &__decoration--2 {
                 display: none;
             }
 
-            .hero__scroll {
+            &__scroll {
                 bottom: 30px;
                 font-size: 0.75rem;
             }
 
-            .hero__scroll-icon {
+            &__scroll-icon {
                 width: 20px;
                 height: 35px;
             }
         }
 
         @media (max-width: 480px) {
-            .hero__content {
+            &__content {
                 padding: 80px 20px 50px;
             }
 
-            .hero__badge {
+            &__badge {
                 font-size: 0.75rem;
                 padding: 8px 18px;
             }
@@ -1397,6 +1406,18 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
         from {
             opacity: 0;
             transform: translateY(-30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
         }
 
         to {
@@ -1819,15 +1840,6 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
     animation: fadeIn 0.4s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
 // Mensaje de no resultados
 .no-results {
     text-align: center;
@@ -2119,13 +2131,13 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
 // Contenedor principal
 .ayni-assistant {
     position: fixed;
-    bottom: 20px;
+    bottom: 90px;
     right: 20px;
     z-index: 9999;
     font-family: $font-primary;
 
     @media (max-width: 768px) {
-        bottom: 15px;
+        bottom: 80px;
         right: 15px;
     }
 
@@ -2593,940 +2605,32 @@ $font-body-hero: 'Plus Jakarta Sans', sans-serif;
     }
 }
 
-
-
-// ============================================
-// PLANIFICADOR DE VIAJE - SCSS
-// ============================================
-
-// Variables
-$planner-primary: #8B4513;
-$planner-secondary: #D2691E;
-$planner-success: #228B22;
-$planner-danger: #DC3545;
-$planner-warning: #FFA500;
-$planner-dark: #2C1810;
-$planner-light: #F5F5DC;
-$planner-border: #DEB887;
-
-// ============================================
-// BOTÓN FLOTANTE
-// ============================================
-
-.trip-planner-btn {
-    position: fixed;
-    bottom: 130px; // Arriba de Ayni
-    right: 26px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, $planner-primary 0%, $planner-secondary 100%);
-    border: none;
-    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9997;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    
-    svg {
-        color: white;
-    }
-    
-    &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4);
-    }
-    
-    &:active {
-        transform: translateY(-1px);
-    }
-    
-    &__badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: $planner-danger;
-        color: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 600;
-        border: 2px solid white;
-        opacity: 0;
-        transform: scale(0);
-        transition: all 0.3s ease;
-        
-        &.active {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
+// Planner CTA en hero
+.hero__planner-cta {
+    margin-top: 16px;
+    animation: fadeInUp 1s ease 1.1s both;
 }
 
-// ============================================
-// MODAL PRINCIPAL
-// ============================================
-
-.trip-planner-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
-    display: none;
-    
-    &.active {
-        display: block;
-    }
-    
-    &__overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(4px);
-        animation: fadeIn 0.3s ease;
-    }
-    
-    &__container {
-        position: relative;
-        width: 95%;
-        max-width: 1400px;
-        height: 90vh;
-        margin: 5vh auto;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        display: flex;
-        flex-direction: column;
-        animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-    
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 25px 30px;
-        border-bottom: 2px solid $planner-border;
-        background: linear-gradient(135deg, $planner-light 0%, white 100%);
-        border-radius: 20px 20px 0 0;
-    }
-    
-    &__header-left {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    &__title {
-        font-size: 28px;
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    &__subtitle {
-        font-size: 14px;
-        color: #666;
-        margin: 5px 0 0 0;
-    }
-    
-    &__close {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        
-        &:hover {
-            background: rgba(220, 53, 69, 0.1);
-            
-            svg {
-                stroke: $planner-danger;
-            }
-        }
-    }
-    
-    &__toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 30px;
-        background: #FAFAFA;
-        border-bottom: 1px solid #E0E0E0;
-    }
-    
-    &__toolbar-right {
-        display: flex;
-        gap: 10px;
-    }
-    
-    &__content {
-        flex: 1;
-        display: grid;
-        grid-template-columns: 1fr 350px;
-        gap: 0;
-        overflow: hidden;
-    }
-    
-    &__days {
-        padding: 25px;
-        overflow-y: auto;
-        background: #F9F9F9;
-        
-        &::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        &::-webkit-scrollbar-track {
-            background: #F1F1F1;
-        }
-        
-        &::-webkit-scrollbar-thumb {
-            background: $planner-border;
-            border-radius: 4px;
-            
-            &:hover {
-                background: $planner-secondary;
-            }
-        }
-    }
-    
-    &__summary {
-        background: white;
-        border-left: 2px solid $planner-border;
-        padding: 25px;
-        overflow-y: auto;
-        
-        &::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        &::-webkit-scrollbar-track {
-            background: #F1F1F1;
-        }
-        
-        &::-webkit-scrollbar-thumb {
-            background: $planner-border;
-            border-radius: 3px;
-        }
-    }
-}
-
-// ============================================
-// BOTONES
-// ============================================
-
-.trip-planner-btn-primary,
-.trip-planner-btn-secondary,
-.trip-planner-btn-danger {
+.hero__planner-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    font-size: 14px;
+    padding: 12px 26px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50px;
+    color: $white;
+    text-decoration: none;
+    font-size: 0.9rem;
     font-weight: 600;
-    cursor: pointer;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(8px);
     transition: all 0.3s ease;
-    
-    svg {
-        flex-shrink: 0;
-    }
-}
 
-.trip-planner-btn-primary {
-    background: linear-gradient(135deg, $planner-primary 0%, $planner-secondary 100%);
-    color: white;
-    
     &:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.6);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
-    }
-}
-
-.trip-planner-btn-secondary {
-    background: white;
-    color: $planner-dark;
-    border: 2px solid $planner-border;
-    
-    &:hover {
-        background: $planner-light;
-        border-color: $planner-secondary;
-    }
-}
-
-.trip-planner-btn-danger {
-    background: white;
-    color: $planner-danger;
-    border: 2px solid lighten($planner-danger, 30%);
-    
-    &:hover {
-        background: lighten($planner-danger, 45%);
-        border-color: $planner-danger;
-    }
-}
-
-// ============================================
-// EMPTY STATE
-// ============================================
-
-.trip-planner-empty {
-    text-align: center;
-    padding: 80px 40px;
-    
-    &__icon {
-        font-size: 80px;
-        margin-bottom: 20px;
-        animation: float 3s ease-in-out infinite;
-    }
-    
-    &__title {
-        font-size: 24px;
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0 0 10px 0;
-    }
-    
-    &__text {
-        font-size: 16px;
-        color: #666;
-        margin: 0 0 30px 0;
-    }
-}
-
-// ============================================
-// DAY CARD
-// ============================================
-
-.trip-day {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 2px solid $planner-border;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    
-    &:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    }
-    
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-    
-    &__header-left {
-        flex: 1;
-    }
-    
-    &__number {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, $planner-primary 0%, $planner-secondary 100%);
-        color: white;
-        border-radius: 8px;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-    
-    &__title {
-        font-size: 20px;
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0 0 5px 0;
-        
-        input {
-            border: none;
-            background: transparent;
-            font-size: inherit;
-            font-weight: inherit;
-            color: inherit;
-            width: 100%;
-            padding: 4px 8px;
-            border-radius: 4px;
-            
-            &:focus {
-                outline: none;
-                background: $planner-light;
-            }
-        }
-    }
-    
-    &__subtitle {
-        font-size: 13px;
-        color: #666;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        
-        span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-    }
-    
-    &__actions {
-        display: flex;
-        gap: 8px;
-    }
-    
-    &__btn {
-        padding: 8px 12px;
-        border: 1px solid $planner-border;
-        background: white;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 13px;
-        
-        &:hover {
-            background: $planner-light;
-        }
-        
-        &--delete {
-            color: $planner-danger;
-            border-color: lighten($planner-danger, 30%);
-            
-            &:hover {
-                background: lighten($planner-danger, 45%);
-                border-color: $planner-danger;
-            }
-        }
-    }
-    
-    &__activities {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-bottom: 15px;
-    }
-    
-    &__empty {
-        text-align: center;
-        padding: 40px 20px;
-        color: #999;
-        font-size: 14px;
-        border: 2px dashed $planner-border;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }
-    
-    &__add-activity {
-        width: 100%;
-        padding: 12px;
-        border: 2px dashed $planner-secondary;
-        background: transparent;
-        color: $planner-primary;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        
-        &:hover {
-            background: lighten($planner-light, 5%);
-            border-style: solid;
-        }
-    }
-}
-
-// ============================================
-// ACTIVITY CARD
-// ============================================
-
-.trip-activity {
-    display: flex;
-    gap: 12px;
-    padding: 12px;
-    background: $planner-light;
-    border-radius: 8px;
-    border-left: 4px solid $planner-primary;
-    
-    &__icon {
-        font-size: 24px;
-        flex-shrink: 0;
-    }
-    
-    &__content {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 4px;
-    }
-    
-    &__name {
-        font-weight: 600;
-        color: $planner-dark;
-        font-size: 14px;
-    }
-    
-    &__delete {
-        background: none;
-        border: none;
-        color: #999;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-        
-        &:hover {
-            color: $planner-danger;
-            background: rgba(220, 53, 69, 0.1);
-        }
-    }
-    
-    &__meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 4px;
-    }
-    
-    &__tag {
-        background: white;
-        padding: 2px 8px;
-        border-radius: 4px;
-        border: 1px solid $planner-border;
-    }
-    
-    &__distance {
-        color: $planner-secondary;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 12px;
-    }
-}
-
-// ============================================
-// SUMMARY
-// ============================================
-
-.trip-planner-summary {
-    &__title {
-        font-size: 18px;
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0 0 20px 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    &__stats {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-bottom: 30px;
-    }
-    
-    &__stat {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: $planner-light;
-        border-radius: 8px;
-        border-left: 4px solid $planner-secondary;
-    }
-    
-    &__stat-icon {
-        font-size: 24px;
-    }
-    
-    &__stat-info {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    &__stat-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: $planner-primary;
-        line-height: 1;
-    }
-    
-    &__stat-label {
-        font-size: 12px;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    &__contacts {
-        border-top: 2px solid $planner-border;
-        padding-top: 20px;
-    }
-    
-    &__contacts-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0 0 15px 0;
-    }
-    
-    &__contacts-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    &__contacts-empty {
-        text-align: center;
-        color: #999;
-        font-size: 13px;
-        padding: 20px;
-    }
-    
-    &__contact {
-        padding: 10px;
-        background: white;
-        border: 1px solid $planner-border;
-        border-radius: 6px;
-        font-size: 13px;
-        
-        &-name {
-            font-weight: 600;
-            color: $planner-dark;
-            margin-bottom: 4px;
-        }
-        
-        &-phone {
-            color: $planner-secondary;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            
-            a {
-                color: inherit;
-                text-decoration: none;
-                
-                &:hover {
-                    text-decoration: underline;
-                }
-            }
-        }
-    }
-}
-
-// ============================================
-// ADD ACTIVITY MODAL
-// ============================================
-
-.add-activity-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10001;
-    display: none;
-    
-    &.active {
-        display: block;
-    }
-    
-    &__overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        animation: fadeIn 0.2s ease;
-    }
-    
-    &__container {
-        position: relative;
-        width: 90%;
-        max-width: 800px;
-        height: 80vh;
-        margin: 10vh auto;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        display: flex;
-        flex-direction: column;
-        animation: slideUp 0.3s ease;
-    }
-    
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 25px;
-        border-bottom: 2px solid $planner-border;
-    }
-    
-    &__title {
-        font-size: 20px;
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0;
-    }
-    
-    &__close {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 6px;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        
-        &:hover {
-            background: rgba(220, 53, 69, 0.1);
-            
-            svg {
-                stroke: $planner-danger;
-            }
-        }
-    }
-    
-    &__filters {
-        padding: 20px 25px;
-        border-bottom: 1px solid #E0E0E0;
-        background: #FAFAFA;
-    }
-    
-    &__search {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid $planner-border;
-        border-radius: 8px;
-        font-size: 14px;
-        margin-bottom: 12px;
-        
-        &:focus {
-            outline: none;
-            border-color: $planner-secondary;
-        }
-    }
-    
-    &__filter-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-    
-    &__select {
-        padding: 10px 12px;
-        border: 2px solid $planner-border;
-        border-radius: 8px;
-        font-size: 14px;
-        background: white;
-        
-        &:focus {
-            outline: none;
-            border-color: $planner-secondary;
-        }
-    }
-    
-    &__list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px 25px;
-        
-        &::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        &::-webkit-scrollbar-track {
-            background: #F1F1F1;
-        }
-        
-        &::-webkit-scrollbar-thumb {
-            background: $planner-border;
-            border-radius: 4px;
-        }
-    }
-}
-
-.activity-item {
-    display: flex;
-    gap: 15px;
-    padding: 15px;
-    border: 2px solid $planner-border;
-    border-radius: 10px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-        border-color: $planner-secondary;
-        background: lighten($planner-light, 5%);
-        transform: translateX(5px);
-    }
-    
-    &__image {
-        width: 80px;
-        height: 80px;
-        border-radius: 8px;
-        object-fit: cover;
-        flex-shrink: 0;
-    }
-    
-    &__content {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    &__name {
-        font-weight: 700;
-        color: $planner-dark;
-        margin: 0 0 6px 0;
-        font-size: 15px;
-    }
-    
-    &__meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 8px;
-    }
-    
-    &__tag {
-        background: white;
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        border: 1px solid $planner-border;
-        
-        &--region {
-            color: $planner-primary;
-            border-color: $planner-primary;
-        }
-        
-        &--rubro {
-            color: $planner-secondary;
-            border-color: $planner-secondary;
-        }
-    }
-    
-    &__description {
-        font-size: 13px;
-        color: #666;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-}
-
-// ============================================
-// ANIMATIONS
-// ============================================
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-// ============================================
-// RESPONSIVE
-// ============================================
-
-@media (max-width: 1024px) {
-    .trip-planner-modal {
-        &__content {
-            grid-template-columns: 1fr;
-        }
-        
-        &__summary {
-            display: none; // Ocultar en mobile, agregar botón toggle después
-        }
-    }
-}
-
-@media (max-width: 768px) {
-    .trip-planner-btn {
-        bottom: 110px;
-        right: 16px;
-        width: 55px;
-        height: 55px;
-    }
-    
-    .trip-planner-modal {
-        &__container {
-            width: 100%;
-            height: 100vh;
-            margin: 0;
-            border-radius: 0;
-        }
-        
-        &__toolbar {
-            flex-direction: column;
-            gap: 10px;
-            align-items: stretch;
-            
-            &-right {
-                justify-content: space-between;
-            }
-        }
-    }
-    
-    .add-activity-modal {
-        &__container {
-            width: 100%;
-            height: 100vh;
-            margin: 0;
-            border-radius: 0;
-        }
-        
-        &__filter-group {
-            grid-template-columns: 1fr;
-        }
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 }

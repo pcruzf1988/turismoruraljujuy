@@ -56,6 +56,13 @@
     "title": "Rural Tourism Jujuy - 2025",
     "description": "Secretariat of Popular Economy - Promoting community and sustainable tourism"
   },
+  "modal": {
+    "description": "Description",
+    "infoConditions": "Information and Conditions",
+    "viewDetails": "View details",
+    "howToGet": "How to get there",
+    "website": "Website"
+  },
   "ayni": {
     "name": "Ayni",
     "online": "Online",

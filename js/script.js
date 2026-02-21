@@ -31,7 +31,6 @@ class I18nManager {
             this.translations = await response.json();
             this.currentLang = lang;
         } catch (error) {
-            console.error('Error loading translations:', error);
             // Fallback a español si hay error
             if (lang !== 'es') {
                 await this.loadTranslations('es');
@@ -143,6 +142,16 @@ class I18nManager {
                 el.placeholder = translation;
             }
         });
+
+        // Traducir opciones con prefijo numérico (data-i18n-option)
+        document.querySelectorAll('[data-i18n-option]').forEach(el => {
+            const key = el.getAttribute('data-i18n-option');
+            const prefix = el.getAttribute('data-i18n-option-prefix');
+            const translation = this.getNestedTranslation(key);
+            if (translation) {
+                el.textContent = prefix ? `${prefix} ${translation}` : translation;
+            }
+        });
     }
 
     getNestedTranslation(key) {
@@ -174,8 +183,41 @@ class I18nManager {
 const i18n = new I18nManager();
 
 // ============================================
-// CÓDIGO ORIGINAL
+// UTILIDADES DE SEGURIDAD
 // ============================================
+
+/**
+ * Escapa caracteres HTML para prevenir XSS al insertar datos en el DOM.
+ * @param {string} str - Texto que puede contener HTML o scripts
+ * @returns {string} - Texto seguro para usar en innerHTML
+ */
+function escapeHtml(str) {
+    if (str == null || str === '') return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(str).replace(/[&<>"']/g, (c) => map[c]);
+}
+
+/**
+ * Valida que una URL sea segura para usar en href (solo http, https, mailto, tel).
+ * @param {string} url - URL a validar
+ * @param {string} fallback - Valor por defecto si la URL no es válida
+ * @returns {string|null}
+ */
+function sanitizeHrefUrl(url, fallback = null) {
+    if (!url || typeof url !== 'string') return fallback;
+    const trimmed = url.trim();
+    if (!trimmed) return fallback;
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('http://') || lower.startsWith('https://') ||
+        lower.startsWith('mailto:') || lower.startsWith('tel:')) {
+        return trimmed;
+    }
+    return fallback;
+}
+
+// Placeholder local para imágenes (evita peticiones externas)
+// SVG con comillas dobles para usar seguro en atributos onerror
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23DEB887%22%2F%3E%3C%2Fsvg%3E";
 
 // URL del CSV publicado
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5gGiVAH3mV0ItZZzhpIWCt7CXKbX6UqSpJy76teHK-o6hKeIYeu1p-I1NhFjNxvP0E/pub?gid=0&single=true&output=csv';
@@ -275,60 +317,59 @@ function parseCSV(text) {
     return rows;
 }
 
+// Headers mínimos requeridos en el CSV
+const CSV_REQUIRED_HEADERS = ['Emprendimiento'];
+
 // Función para cargar y parsear el CSV
 async function cargarDatos() {
     try {
-        resultsCount.textContent = 'Cargando emprendimientos...';
-        
+        if (resultsCount) resultsCount.textContent = i18n.t('views.loading');
+
         const response = await fetch(CSV_URL);
-        const csvText = await response.text();
-        
-        console.log('CSV descargado, parseando...');
-        
-        const rows = parseCSV(csvText);
-        
-        if (rows.length === 0) {
-            throw new Error('No se pudieron parsear datos del CSV');
+        if (!response.ok) {
+            throw new Error(`Error de red: ${response.status} ${response.statusText}`);
         }
-        
-        // Primera fila son los headers
-        const headers = rows[0].map(h => h.trim());
-        console.log('Headers encontrados:', headers);
-        console.log('Total de filas:', rows.length);
-        
+        const csvText = await response.text();
+
+        const rows = parseCSV(csvText);
+
+        if (rows.length < 2) {
+            throw new Error('El CSV está vacío o no tiene filas de datos');
+        }
+
+        const headers = rows[0].map(h => (h || '').trim());
+        const missingHeaders = CSV_REQUIRED_HEADERS.filter(h => !headers.includes(h));
+        if (missingHeaders.length > 0) {
+            throw new Error(`Estructura del CSV inválida. Faltan columnas: ${missingHeaders.join(', ')}`);
+        }
+
         // Convertir filas a objetos
         const datos = [];
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             const obj = {};
-            
+
             headers.forEach((header, index) => {
                 obj[header] = row[index] ? row[index].trim() : '';
             });
-            
+
             // Solo agregar si tiene nombre de emprendimiento válido (más de 3 caracteres)
             // Y que tenga al menos Región O Rubro
-            if (obj.Emprendimiento && 
-                obj.Emprendimiento.length > 3 && 
+            if (obj.Emprendimiento &&
+                obj.Emprendimiento.length > 3 &&
                 (obj.Región || obj.Rubro)) {
                 datos.push(obj);
             }
         }
-        
+
         emprendimientos = datos;
         emprendimientosFiltrados = datos;
-        
-        console.log(`✅ Cargados ${emprendimientos.length} emprendimientos válidos`);
-        if (emprendimientos.length > 0) {
-            console.log('Ejemplo primer emprendimiento:', emprendimientos[0]);
-        }
-        
+
         llenarFiltros();
         renderizarEmprendimientos();
         actualizarContador();
         
     } catch (error) {
-        console.error('❌ Error al cargar los datos:', error);
         mostrarError();
     }
 }
@@ -379,7 +420,7 @@ function actualizarFiltroComunidades() {
     const comunidadActual = comunidadFilter.value;
     
     // Limpiar el select de comunidades (excepto la primera opción)
-    comunidadFilter.innerHTML = '<option value="">Todas las comunidades / pueblos</option>';
+    comunidadFilter.innerHTML = `<option value="">${i18n.t('filters.allCommunities')}</option>`;
     
     // Llenar con las nuevas opciones
     comunidades.forEach(comunidad => {
@@ -441,59 +482,27 @@ function calcularTotalPaginas() {
 // Actualizar controles de paginación
 function actualizarPaginacion() {
     const totalPages = calcularTotalPaginas();
-    
-    // Mostrar controles superiores
-    if (paginationControls) {
-        paginationControls.style.display = 'flex';
-    }
-    
-    // Mostrar controles inferiores (solo en vista grilla)
-    if (paginationControlsBottom && currentView === 'grid') {
-        paginationControlsBottom.style.display = 'flex';
-    }
-    
-    // Mostrar los botones de navegación y contadores superiores
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
+    const total = emprendimientosFiltrados.length;
+    const pageText = `${i18n.t('pagination.page')} ${currentPage} ${i18n.t('pagination.of')} ${totalPages}`;
+    const rangeText = `${startIndex}-${endIndex} ${i18n.t('pagination.of')} ${total}`;
+    const canGoPrev = currentPage > 1;
+    const canGoNext = currentPage < totalPages;
+
+    if (paginationControls) paginationControls.style.display = 'flex';
+    if (paginationControlsBottom && currentView === 'grid') paginationControlsBottom.style.display = 'flex';
+
     const centerControls = paginationControls?.querySelector('.pagination-controls__center');
     const rightControls = paginationControls?.querySelector('.pagination-controls__right');
-    
     if (centerControls) centerControls.style.display = 'flex';
     if (rightControls) rightControls.style.display = 'flex';
-    
-    // Actualizar info de página (superior)
-    if (pageInfo) {
-        pageInfo.textContent = `${i18n.t('pagination.page')} ${currentPage} ${i18n.t('pagination.of')} ${totalPages}`;
-    }
-    
-    // Actualizar info de página (inferior)
-    if (pageInfoBottom) {
-        pageInfoBottom.textContent = `${i18n.t('pagination.page')} ${currentPage} ${i18n.t('pagination.of')} ${totalPages}`;
-    }
-    
-    // Actualizar rango de elementos mostrados (superior)
-    if (rangeInfo) {
-        const startIndex = (currentPage - 1) * itemsPerPage + 1;
-        const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
-        rangeInfo.textContent = `${startIndex}-${endIndex} ${i18n.t('pagination.of')} ${emprendimientosFiltrados.length}`;
-    }
-    
-    // Actualizar rango de elementos mostrados (inferior)
-    if (rangeInfoBottom) {
-        const startIndex = (currentPage - 1) * itemsPerPage + 1;
-        const endIndex = Math.min(currentPage * itemsPerPage, emprendimientosFiltrados.length);
-        rangeInfoBottom.textContent = `${startIndex}-${endIndex} ${i18n.t('pagination.of')} ${emprendimientosFiltrados.length}`;
-    }
-    
-    // Habilitar/deshabilitar botones superiores
-    if (firstPageBtn) firstPageBtn.disabled = currentPage === 1;
-    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
-    if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
-    if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages;
-    
-    // Habilitar/deshabilitar botones inferiores
-    if (firstPageBtnBottom) firstPageBtnBottom.disabled = currentPage === 1;
-    if (prevPageBtnBottom) prevPageBtnBottom.disabled = currentPage === 1;
-    if (nextPageBtnBottom) nextPageBtnBottom.disabled = currentPage === totalPages;
-    if (lastPageBtnBottom) lastPageBtnBottom.disabled = currentPage === totalPages;
+
+    [pageInfo, pageInfoBottom].forEach(el => { if (el) el.textContent = pageText; });
+    [rangeInfo, rangeInfoBottom].forEach(el => { if (el) el.textContent = rangeText; });
+
+    [firstPageBtn, prevPageBtn, firstPageBtnBottom, prevPageBtnBottom].forEach(el => { if (el) el.disabled = !canGoPrev; });
+    [nextPageBtn, lastPageBtn, nextPageBtnBottom, lastPageBtnBottom].forEach(el => { if (el) el.disabled = !canGoNext; });
 }
 
 // Ocultar paginación (solo los botones de navegación, no el selector)
@@ -607,28 +616,29 @@ function crearCard(emp) {
     const card = document.createElement('div');
     card.className = 'emprendimiento-card';
     
-    const telefono = emp['Teléfono( sin guiones ni espacios: 5493884123456)'];
-    const instagram = emp['Instagram (solo el usuario, sin @)'];
+    const telefono = (emp['Teléfono( sin guiones ni espacios: 5493884123456)'] || '').replace(/\D/g, '');
+    const instagram = (emp['Instagram (solo el usuario, sin @)'] || '').replace(/[^a-zA-Z0-9_.]/g, '');
     const facebook = emp['Facebook (solo el nombre de usuario)'];
     const email = emp['Correo electrónico'];
     const comunidad = emp['Comunidad / Pueblo'];
     
-    // Usar imagen real si existe, sino placeholder
-    let imagenUrl = '';
+    // Usar imagen real si existe y es URL válida, sino placeholder local
+    let imagenUrl = PLACEHOLDER_IMAGE;
     if (emp.Imagen && emp.Imagen.trim()) {
-        imagenUrl = convertirGoogleDriveURL(emp.Imagen.trim());
-        console.log(`📸 ${emp.Emprendimiento}:`, emp.Imagen, '→', imagenUrl);
-    } else {
-        imagenUrl = `https://picsum.photos/400/200?random=${Math.random()}`;
-        console.log(`📸 ${emp.Emprendimiento}: Sin imagen, usando placeholder`);
+        const url = convertirGoogleDriveURL(emp.Imagen.trim());
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            imagenUrl = url;
+        }
     }
+    
+    const nombre = escapeHtml(emp.Emprendimiento || '');
     
     card.innerHTML = `
     <div class="emprendimiento-card__image-container">
         <img 
-            data-src="${imagenUrl}" 
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%23DEB887'/%3E%3C/svg%3E"
-            alt="${emp.Emprendimiento}"
+            data-src="${escapeHtml(imagenUrl)}" 
+            src="${PLACEHOLDER_IMAGE}"
+            alt="${nombre}"
             class="emprendimiento-card__image lazy-load"
             loading="lazy"
         >
@@ -638,21 +648,21 @@ function crearCard(emp) {
                 <line x1="12" y1="8" x2="12" y2="16"></line>
                 <line x1="8" y1="12" x2="16" y2="12"></line>
             </svg>
-            <span>${i18n.t('cards.viewMore')}</span>
+            <span>${escapeHtml(i18n.t('cards.viewMore'))}</span>
         </div>
     </div>
     <div class="emprendimiento-card__content">
             <div class="emprendimiento-card__header">
-                <h3 class="emprendimiento-card__title">${emp.Emprendimiento}</h3>
+                <h3 class="emprendimiento-card__title">${nombre}</h3>
                 <div class="emprendimiento-card__tags">
-                    ${emp.Región ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--region">${emp.Región}</span>` : ''}
-                    ${emp.Rubro ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--rubro">${emp.Rubro}</span>` : ''}
+                    ${emp.Región ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--region">${escapeHtml(emp.Región)}</span>` : ''}
+                    ${emp.Rubro ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--rubro">${escapeHtml(emp.Rubro)}</span>` : ''}
                 </div>
             </div>
             
-            ${comunidad ? `<p class="emprendimiento-card__location">${comunidad}</p>` : ''}
+            ${comunidad ? `<p class="emprendimiento-card__location">${escapeHtml(comunidad)}</p>` : ''}
             
-            ${emp.Descripción ? `<p class="emprendimiento-card__description">${emp.Descripción}</p>` : ''}
+            ${emp.Descripción ? `<p class="emprendimiento-card__description">${escapeHtml(emp.Descripción)}</p>` : ''}
             
             <div class="emprendimiento-card__footer">
                 <div class="emprendimiento-card__contact">
@@ -700,7 +710,7 @@ function crearCard(emp) {
                     
                     ${email ? `
                         <a 
-                            href="mailto:${email}" 
+                            href="mailto:${escapeHtml(email)}" 
                             class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--email"
                             onclick="event.stopPropagation()"
                             title="Email"
@@ -825,9 +835,13 @@ const modalContent = document.getElementById('modalContent');
 let currentSlide = 0;
 
 // Abrir modal
+let lastFocusedElement = null;
+
 function abrirModal(emprendimiento) {
     currentSlide = 0;
+    lastFocusedElement = document.activeElement;
     modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     
     // Crear contenido del modal
@@ -843,31 +857,43 @@ function abrirModal(emprendimiento) {
     const ubicacion = emprendimiento['Ubicación (formato: -23.5772, -65.3969 latitud,longitud)'];
     const coords = parsearCoordenadas(ubicacion);
     
-    // Recopilar todas las imágenes disponibles
+    // Recopilar todas las imágenes disponibles (solo URLs http/https válidas)
     const imagenes = [
         emprendimiento.Imagen,
         emprendimiento.Imagen2,
         emprendimiento.Imagen3,
         emprendimiento.Imagen4
-    ].filter(img => img && img.trim()).map(img => convertirGoogleDriveURL(img.trim()));
+    ]
+        .filter(img => img && img.trim())
+        .map(img => convertirGoogleDriveURL(img.trim()))
+        .filter(url => url && (url.startsWith('http://') || url.startsWith('https://')));
     
-    // Si no hay imágenes, usar placeholder
+    // Si no hay imágenes, usar placeholder local
     if (imagenes.length === 0) {
-        imagenes.push(`https://picsum.photos/800/400?random=${Math.random()}`);
+        imagenes.push(PLACEHOLDER_IMAGE);
     }
+    
+    const webUrl = sanitizeHrefUrl(emprendimiento.Web);
+    const nombreModal = escapeHtml(emprendimiento.Emprendimiento || '');
+    const regionModal = escapeHtml(emprendimiento.Región || '');
+    const rubroModal = escapeHtml(emprendimiento.Rubro || '');
+    const comunidadModal = escapeHtml(emprendimiento['Comunidad / Pueblo'] || '');
+    const descripcionModal = escapeHtml(emprendimiento.Descripción || '');
+    const infoModal = escapeHtml(emprendimiento['Info / Atención / Condiciones de reserva'] || '');
     
     modalContent.innerHTML = `
         <!-- Galería de imágenes -->
         <div class="modal__gallery">
             <div class="modal__gallery-track" id="galleryTrack">
-                ${imagenes.map(img => `
-                    <img 
-                        src="${img}" 
-                        alt="${emprendimiento.Emprendimiento}"
+                ${imagenes.map(img => {
+                    const safeImg = (img.startsWith('data:')) ? img : escapeHtml(img);
+                    return `<img 
+                        src="${safeImg}" 
+                        alt="${nombreModal}"
                         class="modal__gallery-image"
-                        onerror="this.src='https://picsum.photos/800/400?random=${Math.random()}'"
-                    >
-                `).join('')}
+                        onerror="this.src='${PLACEHOLDER_IMAGE.replace(/'/g, "\\'")}'"
+                    >`;
+                }).join('')}
             </div>
             
             ${imagenes.length > 1 ? `
@@ -895,32 +921,32 @@ function abrirModal(emprendimiento) {
         <!-- Información -->
         <div class="modal__info">
             <div class="modal__header">
-                <h2 class="modal__title">${emprendimiento.Emprendimiento}</h2>
+                <h2 id="modalTitle" class="modal__title">${nombreModal}</h2>
                 <div class="modal__tags">
-                    ${emprendimiento.Región ? `<span class="modal__tag modal__tag--region">${emprendimiento.Región}</span>` : ''}
-                    ${emprendimiento.Rubro ? `<span class="modal__tag modal__tag--rubro">${emprendimiento.Rubro}</span>` : ''}
+                    ${emprendimiento.Región ? `<span class="modal__tag modal__tag--region">${regionModal}</span>` : ''}
+                    ${emprendimiento.Rubro ? `<span class="modal__tag modal__tag--rubro">${rubroModal}</span>` : ''}
                 </div>
-                ${comunidad ? `<p class="modal__location">${comunidad}</p>` : ''}
+                ${comunidad ? `<p class="modal__location">${comunidadModal}</p>` : ''}
             </div>
             
             ${emprendimiento.Descripción ? `
                 <div class="modal__section">
-                    <h3 class="modal__section-title">Descripción</h3>
-                    <p class="modal__section-content">${emprendimiento.Descripción}</p>
+                    <h3 class="modal__section-title">${escapeHtml(i18n.t('modal.description'))}</h3>
+                    <p class="modal__section-content">${descripcionModal}</p>
                 </div>
             ` : ''}
-            
+
             ${infoAtencion ? `
                 <div class="modal__section">
-                    <h3 class="modal__section-title">Información y Condiciones</h3>
-                    <p class="modal__section-content">${infoAtencion}</p>
+                    <h3 class="modal__section-title">${escapeHtml(i18n.t('modal.infoConditions'))}</h3>
+                    <p class="modal__section-content">${infoModal}</p>
                 </div>
             ` : ''}
             
             <!-- Botones de contacto -->
             <div class="modal__contacts">
                 ${telefono ? `
-                    <a href="https://wa.me/${telefono}" target="_blank" class="modal__contact-btn modal__contact-btn--whatsapp" title="WhatsApp">
+                    <a href="https://wa.me/${telefono}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--whatsapp" title="WhatsApp">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
@@ -929,7 +955,7 @@ function abrirModal(emprendimiento) {
                 ` : ''}
                 
                 ${instagram ? `
-                    <a href="https://instagram.com/${instagram}" target="_blank" class="modal__contact-btn modal__contact-btn--instagram" title="Instagram">
+                    <a href="https://instagram.com/${instagram}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--instagram" title="Instagram">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                         </svg>
@@ -938,7 +964,7 @@ function abrirModal(emprendimiento) {
                 ` : ''}
                 
                 ${facebook ? `
-                    <a href="${formatearFacebookURL(facebook)}" target="_blank" class="modal__contact-btn modal__contact-btn--facebook" title="Facebook">
+                    <a href="${escapeHtml(formatearFacebookURL(facebook) || '')}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--facebook" title="Facebook">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                         </svg>
@@ -947,7 +973,7 @@ function abrirModal(emprendimiento) {
                 ` : ''}
                 
                 ${email ? `
-                    <a href="mailto:${email}" class="modal__contact-btn modal__contact-btn--email" title="Email">
+                    <a href="mailto:${escapeHtml(email)}" class="modal__contact-btn modal__contact-btn--email" title="Email">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="4" width="20" height="16" rx="2"/>
                             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
@@ -956,23 +982,23 @@ function abrirModal(emprendimiento) {
                     </a>
                 ` : ''}
                 
-                ${web ? `
-                    <a href="${web}" target="_blank" class="modal__contact-btn modal__contact-btn--web" title="Sitio Web">
+                ${webUrl ? `
+                    <a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--web" title="${escapeHtml(i18n.t('modal.website'))}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="2" y1="12" x2="22" y2="12"/>
                             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                         </svg>
-                        <span>Sitio Web</span>
+                        <span>${i18n.t('modal.website')}</span>
                     </a>
                 ` : ''}
-                
+
                 ${coords ? `
-                    <a href="https://www.google.com/maps/search/?api=1&query=${coords[0]},${coords[1]}" target="_blank" class="modal__contact-btn modal__contact-btn--maps" title="Cómo llegar">
+                    <a href="https://www.google.com/maps/search/?api=1&query=${coords[0]},${coords[1]}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--maps" title="${escapeHtml(i18n.t('modal.howToGet'))}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 0c-4.198 0-8 3.403-8 7.602 0 4.198 3.469 9.21 8 16.398 4.531-7.188 8-12.2 8-16.398 0-4.199-3.801-7.602-8-7.602zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/>
                         </svg>
-                        <span>Cómo llegar</span>
+                        <span>${i18n.t('modal.howToGet')}</span>
                     </a>
                 ` : ''}
             </div>
@@ -983,6 +1009,11 @@ function abrirModal(emprendimiento) {
     if (imagenes.length > 1) {
         setupGalleryNavigation(imagenes.length);
     }
+
+    // Enfocar el botón de cerrar para accesibilidad (permite navegar con teclado)
+    setTimeout(() => {
+        if (modalClose) modalClose.focus();
+    }, 100);
 }
 
 // Configurar navegación de galería
@@ -1030,7 +1061,11 @@ function setupGalleryNavigation(totalImages) {
 // Cerrar modal
 function cerrarModal() {
     modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    if (lastFocusedElement && lastFocusedElement.focus) {
+        lastFocusedElement.focus();
+    }
 }
 
 modalClose.addEventListener('click', cerrarModal);
@@ -1043,8 +1078,7 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Inicializar la aplicación
-cargarDatos();
+// cargarDatos() se llama desde DOMContentLoaded después de inicializar i18n
 
 // ============================================
 // FUNCIONES DEL MAPA INTERACTIVO
@@ -1071,15 +1105,10 @@ function parsearCoordenadas(ubicacion) {
 
 // Inicializar el mapa de Leaflet
 function inicializarMapa() {
-    console.log('🗺️ Inicializando mapa...');
-    
     // CRÍTICO: Establecer altura ANTES de crear el mapa
     const mapContainer = document.getElementById('map');
     mapContainer.style.height = '600px';
     mapContainer.style.width = '100%';
-    
-    console.log('🗺️ Contenedor configurado:', mapContainer);
-    console.log('🗺️ Leaflet disponible:', typeof L !== 'undefined');
     
     // Crear el mapa centrado en Jujuy
     map = L.map('map', {
@@ -1091,7 +1120,6 @@ function inicializarMapa() {
         scrollWheelZoom: true
     });
     
-    console.log('🗺️ Mapa creado:', map);
     
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     attribution: 'Tiles © Esri',
@@ -1105,7 +1133,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{
     subdomains: 'abcd'
 }).addTo(map);
     
-    console.log('🗺️ Tiles agregados');
     
     // Crear capa de marcadores con clustering
     markersLayer = L.markerClusterGroup({
@@ -1130,12 +1157,10 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{
     
     map.addLayer(markersLayer);
     
-    console.log('🗺️ Capa de marcadores creada');
     
     // Cargar marcadores iniciales
     actualizarMarcadores();
     
-    console.log('🗺️ Mapa inicializado completamente');
 }
 
 // Función para obtener el nombre del archivo de icono según rubro y región
@@ -1190,52 +1215,41 @@ function crearIconoPersonalizado(rubro, region) {
 
 // Actualizar marcadores en el mapa según filtros
 function actualizarMarcadores() {
-    console.log('📍 Actualizando marcadores...');
-    console.log('📍 Map existe:', !!map);
-    console.log('📍 MarkersLayer existe:', !!markersLayer);
+    if (!map || !markersLayer) return;
     
-    if (!map || !markersLayer) {
-        console.log('📍 No se puede actualizar: mapa o capa no inicializados');
-        return;
-    }
-    
-    // Limpiar marcadores existentes
     markersLayer.clearLayers();
     
-    console.log('📍 Emprendimientos filtrados:', emprendimientosFiltrados.length);
-    
-    let marcadoresCreados = 0;
-    
-    // Agregar marcadores de emprendimientos filtrados
-    emprendimientosFiltrados.forEach((emprendimiento) => {
+    emprendimientosFiltrados.forEach((emprendimiento, index) => {
         const coords = parsearCoordenadas(emprendimiento['Ubicación (formato: -23.5772, -65.3969 latitud,longitud)']);
-        
-        console.log(`📍 ${emprendimiento.Emprendimiento}: coords =`, coords);
         
         if (coords) {
             const marker = L.marker(coords, {
                 icon: crearIconoPersonalizado(emprendimiento.Rubro, emprendimiento.Región)
             });
             
-            // Crear popup con info básica
-            let imagenUrl = '';
+            let imagenUrl = PLACEHOLDER_IMAGE;
             if (emprendimiento.Imagen && emprendimiento.Imagen.trim()) {
-                imagenUrl = convertirGoogleDriveURL(emprendimiento.Imagen.trim());
-            } else {
-                imagenUrl = `https://picsum.photos/200/150?random=${Math.random()}`;
+                const url = convertirGoogleDriveURL(emprendimiento.Imagen.trim());
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    imagenUrl = url;
+                }
             }
+            
+            const nombrePopup = escapeHtml(emprendimiento.Emprendimiento || '');
+            const regionPopup = escapeHtml(emprendimiento.Región || '');
+            const rubroPopup = escapeHtml(emprendimiento.Rubro || '');
             
             const popupContent = `
                 <div class="map-popup">
-                    <img src="${imagenUrl}" alt="${emprendimiento.Emprendimiento}" class="map-popup__image"
-                         onerror="this.src='https://picsum.photos/200/150?random=${Math.random()}'">
-                    <h4 class="map-popup__title">${emprendimiento.Emprendimiento}</h4>
+                    <img src="${escapeHtml(imagenUrl)}" alt="${nombrePopup}" class="map-popup__image"
+                         onerror="this.src='${PLACEHOLDER_IMAGE.replace(/'/g, "\\'")}'">
+                    <h4 class="map-popup__title">${nombrePopup}</h4>
                     <div class="map-popup__tags">
-                        ${emprendimiento.Región ? `<span class="map-popup__tag">${emprendimiento.Región}</span>` : ''}
-                        ${emprendimiento.Rubro ? `<span class="map-popup__tag">${emprendimiento.Rubro}</span>` : ''}
+                        ${emprendimiento.Región ? `<span class="map-popup__tag">${regionPopup}</span>` : ''}
+                        ${emprendimiento.Rubro ? `<span class="map-popup__tag">${rubroPopup}</span>` : ''}
                     </div>
-                    <button class="map-popup__btn" onclick="window.abrirModalDesdeMap('${emprendimiento.Emprendimiento.replace(/'/g, "\\'")}')">
-                        Ver detalles
+                    <button class="map-popup__btn" onclick="window.abrirModalDesdeIndex(${index})">
+                        ${escapeHtml(i18n.t('modal.viewDetails'))}
                     </button>
                 </div>
             `;
@@ -1246,11 +1260,8 @@ function actualizarMarcadores() {
             });
             
             markersLayer.addLayer(marker);
-            marcadoresCreados++;
         }
     });
-    
-    console.log(`📍 Total marcadores creados: ${marcadoresCreados}`);
     
     // Ajustar vista del mapa si hay marcadores
     if (markersLayer.getLayers().length > 0) {
@@ -1261,9 +1272,9 @@ function actualizarMarcadores() {
     }
 }
 
-// Función global para abrir modal desde el mapa
-window.abrirModalDesdeMap = function(nombreEmprendimiento) {
-    const emprendimiento = emprendimientos.find(e => e.Emprendimiento === nombreEmprendimiento);
+// Función global para abrir modal desde el mapa (por índice en emprendimientosFiltrados)
+window.abrirModalDesdeIndex = function(index) {
+    const emprendimiento = emprendimientosFiltrados[parseInt(index, 10)];
     if (emprendimiento) {
         abrirModal(emprendimiento);
     }
@@ -1271,7 +1282,6 @@ window.abrirModalDesdeMap = function(nombreEmprendimiento) {
 
 // Cambiar entre vista grilla y mapa
 function cambiarVista(vista) {
-    console.log('👁️ Cambiando a vista:', vista);
     currentView = vista;
     
     if (vista === 'grid') {
@@ -1470,8 +1480,7 @@ function initLazyLoading() {
                         };
                         
                         tempImg.onerror = () => {
-                            // Si falla, usar el placeholder de picsum
-                            img.src = `https://picsum.photos/400/200?random=${Math.random()}`;
+                            img.src = PLACEHOLDER_IMAGE;
                             img.classList.add('loaded');
                         };
                         
@@ -1785,11 +1794,14 @@ class AyniAssistant {
     }
 }
 
-// Inicializar i18n y Ayni cuando el DOM esté listo
+// Inicializar i18n, cargar datos y Ayni cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
     // Inicializar sistema de internacionalización
     await i18n.init();
-    
+
+    // Cargar datos después de que i18n esté listo (garantiza textos traducidos desde el inicio)
+    await cargarDatos();
+
     // Inicializar asistente Ayni
     window.ayniAssistant = new AyniAssistant();
 });

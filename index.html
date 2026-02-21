@@ -4,32 +4,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turismo Rural Jujuy</title>
+    <title>Turismo Rural Jujuy - Secretaría de Economía Popular</title>
+    <meta name="description"
+        content="Descubrí emprendimientos de turismo rural en Jujuy. Gastronomía andina, artesanías, alojamientos y experiencias en la Puna, Quebrada de Humahuaca y Yungas.">
+    <meta name="keywords"
+        content="turismo rural, Jujuy, Quebrada de Humahuaca, Puna, Yungas, emprendimientos, artesanías, gastronomía, alojamiento">
+    <meta name="author" content="Secretaría de Economía Popular de Jujuy">
+    <meta property="og:title" content="Turismo Rural Jujuy">
+    <meta property="og:description"
+        content="Conectamos emprendedores locales con viajeros conscientes. Experiencias auténticas en la Puna, Quebrada y Yungas.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/png" href="./assets/logosep.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin=""/>
-    
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <!-- Leaflet MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    
+
     <link rel="stylesheet" href="./css/styles.css?v=1.5">
-    
+
 </head>
 
 <body>
     <!-- Selector de idioma -->
     <div class="language-selector" id="languageSelector">
         <button class="language-selector__button" id="languageSelectorBtn" aria-label="Cambiar idioma">
-            <svg class="language-selector__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="language-selector__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="2" y1="12" x2="22" y2="12"></line>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                </path>
             </svg>
             <span class="language-selector__current" id="currentLanguage">ES</span>
         </button>
@@ -66,29 +79,48 @@
         <!-- Contenido principal -->
         <div class="hero__content">
             <span class="hero__badge" data-i18n="hero.badge">Economía Popular</span>
-            
+
             <h1 class="hero__title">
-                <span data-i18n="hero.title">Descubrí el</span> <span class="hero__title-highlight" data-i18n="hero.titleHighlight">Turismo rural</span> <span data-i18n="hero.titleEnd">de Jujuy</span>
+                <span data-i18n="hero.title">Descubrí el</span> <span class="hero__title-highlight"
+                    data-i18n="hero.titleHighlight">Turismo rural</span> <span data-i18n="hero.titleEnd">de Jujuy</span>
             </h1>
 
             <p class="hero__subtitle" data-i18n="hero.subtitle">
-                Una plataforma impulsada por la Secretaría de Economía Popular de Jujuy para conectar emprendedores locales con viajeros conscientes.
+                Una plataforma impulsada por la Secretaría de Economía Popular de Jujuy para conectar emprendedores
+                locales con viajeros conscientes.
             </p>
 
             <p class="hero__description" data-i18n="hero.description">
                 Conocé emprendimientos locales que abren sus puertas para compartir la vida rural jujeña.
-Gastronomía andina elaborada con recetas ancestrales, experiencias vivenciales en el campo, talleres de artesanías, productos con identidad local, caminatas, trekkings y cabalgatas en entornos naturales únicos.
-Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna, la Quebrada y las Yungas, acompañados por quienes habitan y cuidan estos territorios.
+                Gastronomía andina elaborada con recetas ancestrales, experiencias vivenciales en el campo, talleres de
+                artesanías, productos con identidad local, caminatas, trekkings y cabalgatas en entornos naturales
+                únicos.
+                Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna, la Quebrada y las
+                Yungas, acompañados por quienes habitan y cuidan estos territorios.
             </p>
 
             <!-- Buscador integrado en hero -->
             <div class="hero__search">
-                <input type="text" id="searchInput" class="hero__search-input" placeholder="Buscar emprendimientos..." data-i18n-placeholder="hero.searchPlaceholder">
+                <input type="text" id="searchInput" class="hero__search-input" placeholder="Buscar emprendimientos..."
+                    data-i18n-placeholder="hero.searchPlaceholder">
                 <svg class="hero__search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
+            </div>
+
+            <!-- Botón al planificador -->
+            <div class="hero__planner-cta">
+                <a href="./planificador.html" class="hero__planner-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                        <line x1="8" y1="2" x2="8" y2="18" />
+                        <line x1="16" y1="6" x2="16" y2="22" />
+                    </svg>
+                    <span data-i18n="hero.plannerBtn">Planificá tu itinerario</span>
+                </a>
             </div>
         </div>
 
@@ -118,7 +150,8 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
                 </div>
 
                 <div class="filter-group">
-                    <label for="comunidadFilter" class="filter-group__label" data-i18n="filters.community">Comunidad / Pueblo:</label>
+                    <label for="comunidadFilter" class="filter-group__label" data-i18n="filters.community">Comunidad /
+                        Pueblo:</label>
                     <select id="comunidadFilter" class="filter-group__select">
                         <option value="" data-i18n="filters.allCommunities">Todas las comunidades / pueblos</option>
                     </select>
@@ -136,7 +169,8 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
         <div class="view-controls">
             <div class="view-toggle">
                 <button id="gridViewBtn" class="view-toggle__btn view-toggle__btn--active">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
                         <rect x="14" y="14" width="7" height="7"></rect>
@@ -145,7 +179,8 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
                     <span data-i18n="views.grid">Grilla</span>
                 </button>
                 <button id="mapViewBtn" class="view-toggle__btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
                         <line x1="8" y1="2" x2="8" y2="18"></line>
                         <line x1="16" y1="6" x2="16" y2="22"></line>
@@ -159,38 +194,47 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
         <!-- NUEVO: Controles de paginación -->
         <div class="pagination-controls" id="paginationControls" style="display: none;">
             <div class="pagination-controls__left">
-                <label for="itemsPerPage" class="pagination-controls__label" data-i18n="pagination.show">Mostrar:</label>
+                <label for="itemsPerPage" class="pagination-controls__label"
+                    data-i18n="pagination.show">Mostrar:</label>
                 <select id="itemsPerPage" class="pagination-controls__select">
-                    <option value="6">6 <span data-i18n="pagination.perPage">por página</span></option>
-                    <option value="12" selected>12 <span data-i18n="pagination.perPage">por página</span></option>
-                    <option value="24">24 <span data-i18n="pagination.perPage">por página</span></option>
-                    <option value="48">48 <span data-i18n="pagination.perPage">por página</span></option>
+                    <option value="6" data-i18n-option="pagination.perPage" data-i18n-option-prefix="6">6 por página
+                    </option>
+                    <option value="12" selected data-i18n-option="pagination.perPage" data-i18n-option-prefix="12">12
+                        por página</option>
+                    <option value="24" data-i18n-option="pagination.perPage" data-i18n-option-prefix="24">24 por página
+                    </option>
+                    <option value="48" data-i18n-option="pagination.perPage" data-i18n-option-prefix="48">48 por página
+                    </option>
                     <option value="all" data-i18n="pagination.all">Todos</option>
                 </select>
             </div>
 
             <div class="pagination-controls__center">
                 <button id="firstPage" class="pagination-controls__btn pagination-controls__btn--nav">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <polyline points="11 17 6 12 11 7"></polyline>
                         <polyline points="18 17 13 12 18 7"></polyline>
                     </svg>
                 </button>
                 <button id="prevPage" class="pagination-controls__btn pagination-controls__btn--nav">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
-                
+
                 <span class="pagination-controls__info" id="pageInfo">Página 1 de 1</span>
-                
+
                 <button id="nextPage" class="pagination-controls__btn pagination-controls__btn--nav">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </button>
                 <button id="lastPage" class="pagination-controls__btn pagination-controls__btn--nav">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <polyline points="13 17 18 12 13 7"></polyline>
                         <polyline points="6 17 11 12 6 7"></polyline>
                     </svg>
@@ -212,29 +256,34 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
             </div>
 
             <!-- NUEVO: Controles de paginación inferiores (solo para vista grilla) -->
-            <div class="pagination-controls pagination-controls--bottom" id="paginationControlsBottom" style="display: none;">
+            <div class="pagination-controls pagination-controls--bottom" id="paginationControlsBottom"
+                style="display: none;">
                 <div class="pagination-controls__center">
                     <button id="firstPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="11 17 6 12 11 7"></polyline>
                             <polyline points="18 17 13 12 18 7"></polyline>
                         </svg>
                     </button>
                     <button id="prevPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="15 18 9 12 15 6"></polyline>
                         </svg>
                     </button>
-                    
+
                     <span class="pagination-controls__info" id="pageInfoBottom">Página 1 de 1</span>
-                    
+
                     <button id="nextPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                     </button>
                     <button id="lastPageBottom" class="pagination-controls__btn pagination-controls__btn--nav">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
                             <polyline points="13 17 18 12 13 7"></polyline>
                             <polyline points="6 17 11 12 6 7"></polyline>
                         </svg>
@@ -249,7 +298,7 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
             <!-- Vista Mapa -->
             <div class="map-view" id="mapView" style="display: none;">
                 <div id="map" class="map-container"></div>
-                
+
                 <!-- Leyenda del mapa -->
                 <div class="map-legend">
                     <h3 class="map-legend__title" data-i18n="map.legend">Leyenda</h3>
@@ -279,7 +328,8 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
                             <span class="map-legend__label" data-i18n="map.categories.guia">Guías</span>
                         </div>
                     </div>
-                    <p class="map-legend__note" data-i18n="map.legendNote">Los colores de los iconos varían según la región: amarillo (Puna), bordo (Quebrada), verde (Yungas)</p>
+                    <p class="map-legend__note" data-i18n="map.legendNote">Los colores de los iconos varían según la
+                        región: amarillo (Puna), bordo (Quebrada), verde (Yungas)</p>
                 </div>
             </div>
         </div>
@@ -289,22 +339,21 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
     <footer class="footer">
         <div class="container">
             <a href="https://economiapopularjujuy.com/" target="_blank" rel="noopener noreferrer">
-    <img 
-        src="./assets/logosepblanco.png" 
-        alt="Secretaría de Economía Popular de Jujuy" 
-        class="footer__logo"
-    >
-</a>
+                <img src="./assets/logosepblanco.png" alt="Secretaría de Economía Popular de Jujuy"
+                    class="footer__logo">
+            </a>
             <p class="footer__text" data-i18n="footer.title">Turismo Rural Jujuy - 2025</p>
-            <p class="footer__text footer__text--small" data-i18n="footer.description">Secretaría de Economía Popular - Promoviendo el turismo comunitario y sustentable</p>
+            <p class="footer__text footer__text--small" data-i18n="footer.description">Secretaría de Economía Popular -
+                Promoviendo el turismo comunitario y sustentable</p>
         </div>
     </footer>
 
     <!-- Modal de detalle del emprendimiento -->
-    <div id="modalEmprendimiento" class="modal">
+    <div id="modalEmprendimiento" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"
+        aria-hidden="true">
         <div class="modal__overlay"></div>
         <div class="modal__container">
-            <button class="modal__close" id="modalClose">
+            <button class="modal__close" id="modalClose" aria-label="Cerrar ventana">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -342,7 +391,8 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
                     </div>
                 </div>
                 <button class="ayni-assistant__close" id="ayniClose" aria-label="Cerrar chat">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -354,7 +404,7 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
                 <div class="ayni-assistant__welcome">
                     <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__welcome-avatar">
                     <p class="ayni-assistant__welcome-text" data-i18n-html="ayni.welcome">
-                        ¡Hola! Soy <strong>Ayni</strong>, tu asistente de turismo rural en Jujuy. 
+                        ¡Hola! Soy <strong>Ayni</strong>, tu asistente de turismo rural en Jujuy.
                         ¿En qué puedo ayudarte hoy? 🌄
                     </p>
                 </div>
@@ -362,16 +412,11 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
 
             <!-- Input de mensaje -->
             <div class="ayni-assistant__input-wrapper">
-                <input 
-                    type="text" 
-                    class="ayni-assistant__input" 
-                    id="ayniInput"
-                    placeholder="Escribe tu mensaje aquí..."
-                    data-i18n-placeholder="ayni.inputPlaceholder"
-                    aria-label="Escribe tu mensaje"
-                >
+                <input type="text" class="ayni-assistant__input" id="ayniInput" placeholder="Escribe tu mensaje aquí..."
+                    data-i18n-placeholder="ayni.inputPlaceholder" aria-label="Escribe tu mensaje">
                 <button class="ayni-assistant__send" id="ayniSend" aria-label="Enviar mensaje">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
@@ -380,228 +425,31 @@ Cada propuesta invita a conectar con la naturaleza y la cultura viva de la Puna,
 
             <!-- Sugerencias rápidas -->
             <div class="ayni-assistant__suggestions" id="ayniSuggestions">
-                <button class="ayni-assistant__suggestion" data-message-key="quebrada" data-i18n="ayni.suggestions.quebrada">
+                <button class="ayni-assistant__suggestion" data-message-key="quebrada"
+                    data-i18n="ayni.suggestions.quebrada">
                     🏔️ Quebrada de Humahuaca
                 </button>
-                <button class="ayni-assistant__suggestion" data-message-key="alojamiento" data-i18n="ayni.suggestions.alojamiento">
+                <button class="ayni-assistant__suggestion" data-message-key="alojamiento"
+                    data-i18n="ayni.suggestions.alojamiento">
                     🏠 Alojamiento
                 </button>
-                <button class="ayni-assistant__suggestion" data-message-key="artesanias" data-i18n="ayni.suggestions.artesanias">
+                <button class="ayni-assistant__suggestion" data-message-key="artesanias"
+                    data-i18n="ayni.suggestions.artesanias">
                     🎨 Artesanías
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ============================================ -->
-<!-- PLANIFICADOR DE VIAJE - HTML -->
-<!-- ============================================ -->
-<!-- Agregar ANTES del cierre de </body> -->
-
-<!-- Botón flotante para abrir el planificador -->
-<button id="tripPlannerBtn" class="trip-planner-btn" title="Planificador de Viaje">
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 10H3"></path>
-        <path d="M21 6H3"></path>
-        <path d="M21 14H3"></path>
-        <path d="M21 18H3"></path>
-    </svg>
-    <span class="trip-planner-btn__badge" id="tripBadge">0</span>
-</button>
-
-<!-- Modal del Planificador -->
-<div id="tripPlannerModal" class="trip-planner-modal">
-    <div class="trip-planner-modal__overlay"></div>
-    <div class="trip-planner-modal__container">
-        
-        <!-- Header -->
-        <div class="trip-planner-modal__header">
-            <div class="trip-planner-modal__header-left">
-                <h2 class="trip-planner-modal__title">
-                    🗺️ <span data-i18n="tripPlanner.title">Mi Viaje por Jujuy</span>
-                </h2>
-                <p class="trip-planner-modal__subtitle" id="tripSubtitle">
-                    <span data-i18n="tripPlanner.subtitle">Planificá tu itinerario perfecto</span>
-                </p>
-            </div>
-            <button class="trip-planner-modal__close" id="closeTripPlanner" aria-label="Cerrar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Toolbar -->
-        <div class="trip-planner-modal__toolbar">
-            <button class="trip-planner-btn-secondary" id="addDayBtn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                <span data-i18n="tripPlanner.addDay">Agregar Día</span>
-            </button>
-            
-            <div class="trip-planner-modal__toolbar-right">
-                <button class="trip-planner-btn-secondary" id="saveTripBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                        <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    <span data-i18n="tripPlanner.save">Guardar</span>
-                </button>
-                
-                <button class="trip-planner-btn-secondary" id="exportTripBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span data-i18n="tripPlanner.export">Exportar</span>
-                </button>
-                
-                <button class="trip-planner-btn-danger" id="clearTripBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    <span data-i18n="tripPlanner.clear">Limpiar</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Content: Days + Summary -->
-        <div class="trip-planner-modal__content">
-            
-            <!-- Days Container -->
-            <div class="trip-planner-modal__days" id="tripDays">
-                <!-- Empty state -->
-                <div class="trip-planner-empty" id="tripEmptyState">
-                    <div class="trip-planner-empty__icon">🗺️</div>
-                    <h3 class="trip-planner-empty__title" data-i18n="tripPlanner.emptyTitle">
-                        ¡Comenzá a planificar tu viaje!
-                    </h3>
-                    <p class="trip-planner-empty__text" data-i18n="tripPlanner.emptyText">
-                        Agregá días a tu itinerario y empezá a descubrir Jujuy
-                    </p>
-                    <button class="trip-planner-btn-primary" id="addFirstDayBtn">
-                        <span data-i18n="tripPlanner.addFirstDay">Agregar primer día</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Summary Sidebar -->
-            <div class="trip-planner-modal__summary" id="tripSummary">
-                <h3 class="trip-planner-summary__title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                    </svg>
-                    <span data-i18n="tripPlanner.summaryTitle">Resumen del Viaje</span>
-                </h3>
-                
-                <div class="trip-planner-summary__stats">
-                    <div class="trip-planner-summary__stat">
-                        <span class="trip-planner-summary__stat-icon">📅</span>
-                        <div class="trip-planner-summary__stat-info">
-                            <span class="trip-planner-summary__stat-value" id="statDays">0</span>
-                            <span class="trip-planner-summary__stat-label" data-i18n="tripPlanner.days">días</span>
-                        </div>
-                    </div>
-                    
-                    <div class="trip-planner-summary__stat">
-                        <span class="trip-planner-summary__stat-icon">📍</span>
-                        <div class="trip-planner-summary__stat-info">
-                            <span class="trip-planner-summary__stat-value" id="statActivities">0</span>
-                            <span class="trip-planner-summary__stat-label" data-i18n="tripPlanner.activities">actividades</span>
-                        </div>
-                    </div>
-                    
-                    <div class="trip-planner-summary__stat">
-                        <span class="trip-planner-summary__stat-icon">🏔️</span>
-                        <div class="trip-planner-summary__stat-info">
-                            <span class="trip-planner-summary__stat-value" id="statRegions">0</span>
-                            <span class="trip-planner-summary__stat-label" data-i18n="tripPlanner.regions">regiones</span>
-                        </div>
-                    </div>
-                    
-                    <div class="trip-planner-summary__stat">
-                        <span class="trip-planner-summary__stat-icon">🚗</span>
-                        <div class="trip-planner-summary__stat-info">
-                            <span class="trip-planner-summary__stat-value" id="statDistance">0</span>
-                            <span class="trip-planner-summary__stat-label">km</span>
-                        </div>
-                    </div>
-                    
-                    <div class="trip-planner-summary__stat">
-                        <span class="trip-planner-summary__stat-icon">⏱️</span>
-                        <div class="trip-planner-summary__stat-info">
-                            <span class="trip-planner-summary__stat-value" id="statTime">0</span>
-                            <span class="trip-planner-summary__stat-label" data-i18n="tripPlanner.hours">hs</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="trip-planner-summary__contacts" id="tripContacts">
-                    <h4 class="trip-planner-summary__contacts-title" data-i18n="tripPlanner.contactsTitle">
-                        📞 Contactos para Reservar
-                    </h4>
-                    <div class="trip-planner-summary__contacts-list" id="contactsList">
-                        <p class="trip-planner-summary__contacts-empty" data-i18n="tripPlanner.noContacts">
-                            Agregá actividades para ver los contactos
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para agregar actividad -->
-<div id="addActivityModal" class="add-activity-modal">
-    <div class="add-activity-modal__overlay"></div>
-    <div class="add-activity-modal__container">
-        <div class="add-activity-modal__header">
-            <h3 class="add-activity-modal__title" data-i18n="tripPlanner.addActivity">Agregar Actividad</h3>
-            <button class="add-activity-modal__close" id="closeAddActivity">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        
-        <div class="add-activity-modal__filters">
-            <input type="text" id="activitySearch" class="add-activity-modal__search" data-i18n-placeholder="tripPlanner.searchActivity" placeholder="Buscar emprendimiento...">
-            
-            <div class="add-activity-modal__filter-group">
-                <select id="activityRegionFilter" class="add-activity-modal__select">
-                    <option value="" data-i18n="tripPlanner.allRegions">Todas las regiones</option>
-                </select>
-                
-                <select id="activityRubroFilter" class="add-activity-modal__select">
-                    <option value="" data-i18n="tripPlanner.allCategories">Todas las categorías</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="add-activity-modal__list" id="activityList">
-            <!-- Se llenará dinámicamente -->
-        </div>
-    </div>
-</div>
-
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
-    
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <!-- Leaflet MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    
+
     <!-- Script -->
     <script src="./js/script.js"></script>
-    <script src="js/planner-script.js"></script>
 </body>
 
 </html>

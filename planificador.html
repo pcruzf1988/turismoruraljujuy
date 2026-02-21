@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Viaje — Turismo Rural Jujuy</title>
+    <meta name="description"
+        content="Planificá tu itinerario por Jujuy. Organizá días, paradas y experiencias únicas en la Puna, Quebrada de Humahuaca y Yungas.">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/png" href="./assets/logosep.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="preconnect" href="https://maps.googleapis.com">
+
+    <link rel="stylesheet" href="./css/planificador.css">
+
+    <!--
+    ══════════════════════════════════════════════════
+    GOOGLE MAPS — CONFIGURACIÓN
+    Reemplazá YOUR_API_KEY con tu clave real.
+    APIs a habilitar en Google Cloud Console:
+      ✓ Maps JavaScript API
+      ✓ Places API
+    ══════════════════════════════════════════════════
+  -->
+    <script>window.MAPS_API_KEY = 'AIzaSyD37dXU3A3GThxW3k0C6GQClfhBJohdesY';</script>
+</head>
+
+<body>
+
+    <div class="planner" id="planner">
+
+        <!-- ═══════════════════════════════════════
+         SIDEBAR
+    ═══════════════════════════════════════ -->
+        <aside class="sidebar" id="sidebar" aria-label="Panel de itinerario">
+
+            <!-- ─── Header ─── -->
+            <div class="sidebar-header">
+                <a href="./index.html" class="back-link" aria-label="Volver al sitio principal">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>Volver al sitio</span>
+                </a>
+
+                <!-- Itinerary Switcher -->
+                <div class="itinerary-switcher" id="itinerarySwitcher">
+                    <button class="itinerary-switcher__trigger" id="switcherTrigger" aria-haspopup="listbox"
+                        aria-expanded="false" aria-label="Seleccionar itinerario">
+                        <div class="itinerary-switcher__left">
+                            <svg class="itinerary-switcher__icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <div>
+                                <div class="itinerary-switcher__name" id="switcherName">—</div>
+                                <div class="itinerary-switcher__sublabel">Mis itinerarios</div>
+                            </div>
+                        </div>
+                        <svg class="itinerary-switcher__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <div class="switcher-dropdown" id="switcherDropdown" role="listbox"
+                        aria-label="Lista de itinerarios">
+                        <div class="switcher-dropdown__list" id="switcherList"></div>
+                        <button class="switcher-dropdown__new" id="newItineraryBtn" aria-label="Crear nuevo itinerario">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" aria-hidden="true">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Nuevo itinerario</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Title ─── -->
+            <div class="itinerary-title-section">
+                <h1 class="itinerary-title" id="itineraryTitle" contenteditable="true" spellcheck="false" role="textbox"
+                    aria-label="Nombre del itinerario" aria-multiline="false"></h1>
+                <p class="itinerary-meta" id="itineraryMeta" aria-live="polite">
+                    <span id="metaDays">0</span>&nbsp;días
+                    &bull;
+                    <span id="metaStops">0</span>&nbsp;paradas
+                </p>
+            </div>
+
+            <!-- ─── Controls ─── -->
+            <div class="controls-bar">
+                <div class="mode-toggle" role="group" aria-label="Modo de días">
+                    <button class="mode-toggle__btn mode-toggle__btn--active" data-mode="days">Días</button>
+                    <button class="mode-toggle__btn" data-mode="dates">Fechas</button>
+                </div>
+
+                <div class="date-range-row" id="dateRangeRow" hidden>
+                    <input type="date" id="startDateInput" class="date-input" aria-label="Fecha de inicio">
+                    <span class="date-range-arrow" aria-hidden="true">→</span>
+                    <span class="date-end-display" id="endDateDisplay" aria-live="polite">—</span>
+                </div>
+            </div>
+
+            <!-- ─── Days List ─── -->
+            <div class="days-list" id="daysList" role="list" aria-label="Días del itinerario" aria-live="polite"></div>
+
+            <!-- ─── Add Day ─── -->
+            <div class="add-day-wrapper">
+                <button class="add-day-btn" id="addDayBtn" aria-label="Agregar un nuevo día al itinerario">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Agregar día</span>
+                </button>
+            </div>
+
+            <!-- ─── Footer ─── -->
+            <div class="sidebar-footer">
+                <div class="actions-row">
+                    <button class="action-btn" disabled title="Disponible en Etapa 5">
+                        <span class="action-btn__tag" aria-hidden="true">Pronto</span>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.8" aria-hidden="true">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        <span>Exportar PDF</span>
+                    </button>
+                    <button class="action-btn" disabled title="Disponible en Etapa 5">
+                        <span class="action-btn__tag" aria-hidden="true">Pronto</span>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.8" aria-hidden="true">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                        <span>Compartir</span>
+                    </button>
+                    <button class="action-btn" disabled title="Disponible en Etapa 5">
+                        <span class="action-btn__tag" aria-hidden="true">Pronto</span>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path
+                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                        </svg>
+                        <span>WhatsApp</span>
+                    </button>
+                </div>
+                <div class="sidebar-branding">
+                    <a href="https://economiapopularjujuy.com/" target="_blank" rel="noopener noreferrer"
+                        aria-label="Secretaría de Economía Popular de Jujuy">
+                        <img src="./assets/logosepblanco.png" alt="Secretaría de Economía Popular de Jujuy">
+                    </a>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- ═══════════════════════════════════════
+         MAP AREA
+    ═══════════════════════════════════════ -->
+        <main class="map-area" id="mapArea">
+
+            <!-- Mobile trigger -->
+            <button class="mobile-nav-btn" id="mobileSidebarToggle" aria-label="Abrir panel de itinerario"
+                aria-expanded="false" aria-controls="sidebar">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    aria-hidden="true">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span>Itinerario</span>
+            </button>
+
+            <!-- ─── Search Bar ─── -->
+            <div class="map-search-bar" id="mapSearchBar">
+                <div class="map-search-bar__inner">
+
+                    <!-- Active day indicator -->
+                    <div class="active-day-pill" id="activeDayPill" aria-live="polite">
+                        <span class="active-day-pill__dot" id="activeDayDot" aria-hidden="true"></span>
+                        <span class="active-day-pill__label" id="activeDayLabel">Seleccioná un día</span>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="map-search-input-wrap">
+                        <svg class="map-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                        <input type="text" id="placesSearchInput" class="map-search-input"
+                            placeholder="Buscar ciudades, lugares, atracciones…" autocomplete="off" spellcheck="false"
+                            aria-label="Buscar lugares en el mapa">
+                        <button class="map-search-clear" id="mapSearchClear" aria-label="Limpiar búsqueda" hidden>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" aria-hidden="true">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ─── Google Map ─── -->
+            <div id="googleMap" class="google-map" aria-label="Mapa interactivo de Jujuy"></div>
+
+            <!-- ─── Loading ─── -->
+            <div class="map-loading" id="mapLoading" aria-live="polite">
+                <div class="map-loading__spinner" aria-hidden="true"></div>
+                <p class="map-loading__text">Cargando mapa…</p>
+            </div>
+
+            <!-- ─── Error ─── -->
+            <div class="map-error" id="mapError" hidden aria-live="assertive">
+                <div class="map-error__card">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C06A3A" stroke-width="1.5"
+                        aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <p class="map-error__title">No se pudo cargar el mapa</p>
+                    <p class="map-error__text" id="mapErrorText">
+                        Verificá que la API key sea válida y que Maps JavaScript API y Places API estén habilitadas en
+                        Google Cloud Console.
+                    </p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+       CONFIRM MODAL
+  ═══════════════════════════════════════ -->
+    <div class="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"
+        aria-hidden="true">
+        <div class="confirm-modal">
+            <h2 class="confirm-modal__title" id="confirmTitle">¿Eliminar?</h2>
+            <p class="confirm-modal__text" id="confirmText">Esta acción no se puede deshacer.</p>
+            <div class="confirm-modal__actions">
+                <button class="confirm-btn confirm-btn--cancel" id="confirmCancel">Cancelar</button>
+                <button class="confirm-btn confirm-btn--danger" id="confirmOk">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- JS propio primero -->
+    <script src="./js/planificador.js"></script>
+
+    <!-- Google Maps se carga después, llama a initPlannerMap cuando está listo -->
+    <script>
+        (function () {
+            var key = window.MAPS_API_KEY;
+            if (!key || key === 'YOUR_API_KEY') {
+                document.getElementById('mapLoading').hidden = true;
+                document.getElementById('mapError').hidden = false;
+                document.getElementById('mapErrorText').textContent =
+                    'Configurá tu API key reemplazando YOUR_API_KEY en planificador.html.';
+                return;
+            }
+            var s = document.createElement('script');
+            s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key +
+                '&libraries=places&loading=async&callback=initPlannerMap';
+            s.async = true;
+            s.defer = true;
+            s.onerror = function () {
+                document.getElementById('mapLoading').hidden = true;
+                document.getElementById('mapError').hidden = false;
+            };
+            document.head.appendChild(s);
+        })();
+    </script>
+
+</body>
+
+</html>
