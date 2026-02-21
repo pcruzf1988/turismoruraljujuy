@@ -37,24 +37,39 @@ function formatDateShort(isoDate, lang = 'es') {
   return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-/** Parse a CSV string into array of objects */
+/** Parse a CSV string into array of objects.
+ *  Versión robusta — maneja saltos de línea dentro de comillas,
+ *  igual que el parser del sitio principal (script.js).
+ */
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-  return lines.slice(1).map(line => {
-    // Simple CSV parse (handles quoted fields)
-    const vals = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; continue; }
-      cur += ch;
+  const rows    = [];
+  let curRow    = [];
+  let curField  = '';
+  let inQuotes  = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch   = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') { curField += '"'; i++; }
+      else if (ch === '"')            { inQuotes = false; }
+      else                            { curField += ch; }
+    } else {
+      if      (ch === '"')                      { inQuotes = true; }
+      else if (ch === ',')                      { curRow.push(curField.trim()); curField = ''; }
+      else if (ch === '\r' && next === '\n')  { curRow.push(curField.trim()); rows.push(curRow); curRow = []; curField = ''; i++; }
+      else if (ch === '\n' || ch === '\r')    { curRow.push(curField.trim()); rows.push(curRow); curRow = []; curField = ''; }
+      else                                      { curField += ch; }
     }
-    vals.push(cur.trim());
+  }
+  if (curField || curRow.length) { curRow.push(curField.trim()); rows.push(curRow); }
+
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => (h || '').trim());
+  return rows.slice(1).map(row => {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+    headers.forEach((h, i) => { obj[h] = (row[i] ?? '').trim(); });
     return obj;
   });
 }
@@ -77,7 +92,11 @@ const TITLE_PLACEHOLDER = {
 };
 
 // CSV path — ajustá si tu CSV está en otra ubicación
-const CSV_URL = './data/emprendimientos.csv';
+// URL del Google Sheet publicado como CSV — misma fuente que el sitio principal
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5gGiVAH3mV0ItZZzhpIWCt7CXKbX6UqSpJy76teHK-o6hKeIYeu1p-I1NhFjNxvP0E/pub?gid=0&single=true&output=csv';
+
+// Columna exacta de coordenadas en el Google Sheet
+const CSV_COORDS_COL = 'Ubicación (formato: -23.5772, -65.3969 latitud,longitud)';
 
 // Jujuy map defaults
 const MAP_CENTER = { lat: -23.08, lng: -65.50 };
@@ -822,21 +841,18 @@ document.addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════════════════
 
 /** @type {google.maps.Map|null} */
-let mapInstance    = null;
+let mapInstance  = null;
 /** @type {google.maps.InfoWindow|null} */
-let infoWindow     = null;
-/** @type {google.maps.places.Autocomplete|null} */
-let autocomplete   = null;
-/** @type {google.maps.Marker|null} */
-let searchMarker   = null;
+let infoWindow   = null;
 
-/** All emprendimiento markers for filtering/reuse */
+/** All emprendimiento markers */
 let emprendimientoMarkers = [];
 
 /**
- * Called by Google Maps JS API via callback=initPlannerMap
+ * Callback invocado por Google Maps JS API al cargarse.
+ * Nombre registrado en: &callback=initPlannerMap
  */
-window.initPlannerMap = async function () {
+window.initPlannerMap = function () {
   const loadingEl = document.getElementById('mapLoading');
   const errorEl   = document.getElementById('mapError');
 
@@ -844,326 +860,157 @@ window.initPlannerMap = async function () {
     mapInstance = new google.maps.Map(document.getElementById('googleMap'), {
       center:            MAP_CENTER,
       zoom:              MAP_ZOOM,
-      mapTypeId:         'terrain',
-      disableDefaultUI:  false,
-      zoomControl:       true,
-      mapTypeControl:    false,
-      scaleControl:      true,
-      streetViewControl: false,
-      rotateControl:     false,
-      fullscreenControl: true,
       gestureHandling:   'greedy',
-      styles: JUJUY_MAP_STYLE,
     });
 
-    infoWindow = new google.maps.InfoWindow({ maxWidth: 290 });
+    infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
 
-    // Fade out loading
-    loadingEl.classList.add('hidden');
-    setTimeout(() => { loadingEl.hidden = true; }, 500);
+    // Ocultar loading
+    loadingEl.style.display = 'none';
 
-    // Init autocomplete and load CSV
-    initPlacesAutocomplete();
-    await loadEmprendimientos();
+    // Cargar emprendimientos desde Google Sheets
+    loadEmprendimientos();
 
   } catch (err) {
-    console.error('[Planificador] Map init error:', err);
-    loadingEl.hidden = true;
-    errorEl.hidden   = false;
+    console.error('[Mapa] Error:', err);
+    loadingEl.hidden  = true;
+    errorEl.hidden    = false;
+    const el = document.getElementById('mapErrorText');
+    if (el) el.textContent = err.name + ': ' + err.message;
   }
 };
 
-// ─── Custom Map Style (earth tones, terrain) ───
-
-const JUJUY_MAP_STYLE = [
-  { featureType: 'water',      elementType: 'geometry',   stylers: [{ color: '#a8c8e0' }] },
-  { featureType: 'landscape',  elementType: 'geometry',   stylers: [{ color: '#e8dcc0' }] },
-  { featureType: 'road',       elementType: 'geometry',   stylers: [{ color: '#d4b98a' }, { lightness: 10 }] },
-  { featureType: 'road',       elementType: 'labels.text.fill', stylers: [{ color: '#6b4c2a' }] },
-  { featureType: 'poi.park',   elementType: 'geometry',   stylers: [{ color: '#b8d4a0' }] },
-  { featureType: 'poi',        elementType: 'labels',     stylers: [{ visibility: 'simplified' }] },
-  { featureType: 'administrative', elementType: 'labels.text.fill', stylers: [{ color: '#5c3a1a' }] },
-  { featureType: 'transit',    elementType: 'geometry',   stylers: [{ color: '#c8a87a' }] },
-];
-
 // ═══════════════════════════════════════════════════════════
-// PLACES AUTOCOMPLETE
+// CSV — EMPRENDIMIENTOS DESDE GOOGLE SHEETS
 // ═══════════════════════════════════════════════════════════
 
-function initPlacesAutocomplete() {
-  const input     = document.getElementById('placesSearchInput');
-  const clearBtn  = document.getElementById('mapSearchClear');
-
-  // Bias to Jujuy province
-  const jujuyBounds = new google.maps.LatLngBounds(
-    new google.maps.LatLng(-24.5, -66.6),
-    new google.maps.LatLng(-21.7, -64.2)
-  );
-
-  autocomplete = new google.maps.places.Autocomplete(input, {
-    bounds:             jujuyBounds,
-    strictBounds:       false,
-    fields:             ['name', 'geometry', 'formatted_address', 'types', 'photos'],
-    componentRestrictions: { country: 'ar' },
-  });
-
-  // Prevent form submit on Enter
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-
-  // Show/hide clear button
-  input.addEventListener('input', () => {
-    clearBtn.hidden = !input.value.trim();
-  });
-
-  clearBtn.addEventListener('click', () => {
-    input.value     = '';
-    clearBtn.hidden = true;
-    if (searchMarker) { searchMarker.setMap(null); searchMarker = null; }
-    infoWindow?.close();
-    input.focus();
-  });
-
-  // Place selected
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    clearBtn.hidden = false;
-
-    if (!place.geometry?.location) {
-      showToast('No se encontró la ubicación.', 'error');
-      return;
-    }
-
-    const loc = place.geometry.location;
-    mapInstance.panTo(loc);
-    mapInstance.setZoom(13);
-
-    // Drop/move search marker
-    if (searchMarker) {
-      searchMarker.setPosition(loc);
-    } else {
-      searchMarker = new google.maps.Marker({
-        position:  loc,
-        map:       mapInstance,
-        title:     place.name,
-        icon:      buildMarkerIcon('place'),
-        animation: google.maps.Animation.DROP,
-        zIndex:    100,
-      });
-    }
-
-    // Open popup
-    const stopData = {
-      name:    place.name,
-      type:    'place',
-      lat:     loc.lat(),
-      lng:     loc.lng(),
-      address: place.formatted_address || '',
-    };
-
-    openInfoWindow(searchMarker, stopData);
-  });
+function parsearCoordsGSheet(ubicacion) {
+  if (!ubicacion || typeof ubicacion !== 'string') return null;
+  const parts = ubicacion.split(',').map(c => c.trim());
+  if (parts.length !== 2) return null;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  return (!isNaN(lat) && !isNaN(lng)) ? { lat, lng } : null;
 }
-
-// ═══════════════════════════════════════════════════════════
-// CSV — EMPRENDIMIENTOS
-// ═══════════════════════════════════════════════════════════
 
 async function loadEmprendimientos() {
   try {
     const res  = await fetch(CSV_URL);
-    if (!res.ok) { console.warn('[Planificador] CSV no encontrado:', CSV_URL); return; }
+    if (!res.ok) { console.warn('[CSV] No encontrado:', CSV_URL); return; }
     const text = await res.text();
     const rows = parseCSV(text);
     placeEmprendimientoMarkers(rows);
   } catch (err) {
-    console.warn('[Planificador] No se pudo cargar el CSV:', err.message);
-    // No mostramos error al usuario — el mapa igual funciona sin los emprendimientos
+    console.warn('[CSV] Error al cargar:', err.message);
   }
 }
 
-/**
- * Determine the region color from CSV row.
- * Tries common column name variations.
- */
 function getRegionColor(row) {
-  const regionVal = (row.region || row.Region || row.REGION || '').toLowerCase();
-  if (regionVal.includes('puna'))     return REGION_COLORS.puna;
-  if (regionVal.includes('quebrada')) return REGION_COLORS.quebrada;
-  if (regionVal.includes('yunga'))    return REGION_COLORS.yungas;
+  const r = (row['Región'] || '').toLowerCase();
+  if (r.includes('puna'))     return REGION_COLORS.puna;
+  if (r.includes('quebrada')) return REGION_COLORS.quebrada;
+  if (r.includes('yunga'))    return REGION_COLORS.yungas;
   return REGION_COLORS.default;
 }
 
 function placeEmprendimientoMarkers(rows) {
   emprendimientoMarkers = [];
-
   for (const row of rows) {
-    // Flexible column name support
-    const latRaw  = row.lat    || row.Lat    || row.LAT    || row.latitud   || row.Latitud   || '';
-    const lngRaw  = row.lng    || row.Lng    || row.LNG    || row.longitud  || row.Longitud  || row.lon || row.Lon || '';
-    const nombre  = row.nombre || row.Nombre || row.NOMBRE || row.name      || row.Name      || '';
-    const rubro   = row.rubro  || row.Rubro  || row.RUBRO  || row.categoria || row.categoria || '';
-    const region  = row.region || row.Region || row.REGION || '';
-    const tel     = row.telefono || row.Telefono || row.tel || '';
-    const email   = row.email    || row.Email    || '';
-    const desc    = row.descripcion || row.Descripcion || row.desc || '';
+    const nombre  = row['Emprendimiento'] || '';
+    const rubro   = row['Rubro']          || '';
+    const region  = row['Región']         || '';
+    const tel     = row['Teléfono']       || row['Telefono'] || '';
+    const email   = row['Email']          || row['Correo']   || '';
+    const desc    = row['Descripción']    || row['Descripcion'] || '';
+    const coords  = parsearCoordsGSheet(row[CSV_COORDS_COL] || '');
 
-    const lat = parseFloat(latRaw);
-    const lng = parseFloat(lngRaw);
+    if (!nombre || nombre.length < 3 || !coords) continue;
 
-    if (!nombre || isNaN(lat) || isNaN(lng)) continue;
-
+    const { lat, lng } = coords;
     const color  = getRegionColor(row);
+
+    // Marcador simple — sin ícono SVG personalizado para evitar errores
     const marker = new google.maps.Marker({
-      position:  { lat, lng },
-      map:       mapInstance,
-      title:     nombre,
-      icon:      buildMarkerIcon('emprendimiento', color),
-      zIndex:    10,
+      position: { lat, lng },
+      map:      mapInstance,
+      title:    nombre,
     });
 
     const stopData = {
-      name:        nombre,
-      type:        'emprendimiento',
-      lat, lng,
-      categoria:   rubro,
-      region,
-      telefono:    tel,
-      email,
-      descripcion: desc,
+      name: nombre, type: 'emprendimiento',
+      lat, lng, categoria: rubro, region,
+      telefono: tel, email, descripcion: desc,
     };
 
     marker.addListener('click', () => openInfoWindow(marker, stopData));
     emprendimientoMarkers.push({ marker, data: stopData });
   }
-}
-
-// ─── Custom SVG Marker Icon ───
-
-function buildMarkerIcon(type, color = '#8B4513') {
-  const isEmp = type === 'emprendimiento';
-  const size  = isEmp ? 34 : 30;
-  // Star for emprendimientos, teardrop pin for places
-  const svgStar = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 34 34">
-    <circle cx="17" cy="17" r="14" fill="${color}" opacity="0.15"/>
-    <circle cx="17" cy="17" r="10" fill="${color}"/>
-    <path d="M17 10l2.09 4.26L24 15.27l-3.5 3.41.83 4.82L17 21.27l-4.33 2.23.83-4.82L10 15.27l4.91-.71L17 10z"
-      fill="white"/>
-  </svg>`;
-
-  const svgPin = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size + 4}" viewBox="0 0 30 36">
-    <path d="M15 2C8.925 2 4 6.925 4 13c0 8.25 11 21 11 21S26 21.25 26 13c0-6.075-4.925-11-11-11z"
-      fill="${color}"/>
-    <circle cx="15" cy="13" r="5" fill="white"/>
-  </svg>`;
-
-  const svg = isEmp ? svgStar : svgPin;
-  return {
-    url:        'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(size, isEmp ? size : size + 4),
-    anchor:     new google.maps.Point(size / 2, isEmp ? size / 2 : size + 4),
-  };
+  console.log(`[Mapa] ${emprendimientoMarkers.length} emprendimientos cargados`);
 }
 
 // ═══════════════════════════════════════════════════════════
-// INFO WINDOW (POPUP)
+// INFO WINDOW (POPUP AL HACER CLICK EN MARCADOR)
 // ═══════════════════════════════════════════════════════════
 
 function openInfoWindow(marker, stopData) {
-  const it       = getActive();
+  const it        = getActive();
   const activeDay = getActiveDay();
+  const dayIdx    = it?.days.findIndex(d => d.id === activeDay?.id) ?? -1;
+  const dayLabel  = dayIdx >= 0 ? `Día ${dayIdx + 1}` : null;
 
-  const isEmp  = stopData.type === 'emprendimiento';
-  const tagCls = isEmp ? 'tag-emprendimiento' : 'tag-place';
-  const tagTxt = isEmp ? '⭐ Emprendimiento' : '📍 Lugar';
-
-  // Check if already in active day
   const alreadyAdded = activeDay?.stops.some(
     s => s.name === stopData.name && Math.abs((s.lat ?? 0) - (stopData.lat ?? 0)) < 0.0001
   );
 
-  const dayIdx   = it?.days.findIndex(d => d.id === activeDay?.id) ?? -1;
-  const dayLabel = dayIdx >= 0 ? `Día ${dayIdx + 1}` : null;
+  const isEmp = stopData.type === 'emprendimiento';
 
-  const btnLabel  = alreadyAdded
-    ? '✓ Ya agregado'
-    : dayLabel
-      ? `Agregar a ${dayLabel}`
-      : 'Seleccioná un día primero';
+  let btnHTML = '';
+  if (alreadyAdded) {
+    btnHTML = `<button style="width:100%;padding:8px;background:#7A9E6F;color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:default">✓ Ya agregado</button>`;
+  } else if (dayLabel) {
+    btnHTML = `<button id="popupAddBtn" style="width:100%;padding:8px;background:#8B4513;color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer">+ Agregar a ${esc(dayLabel)}</button>`;
+  } else {
+    btnHTML = `<p style="font-size:0.75rem;color:#888;text-align:center;margin:4px 0 0">Seleccioná un día en el panel para agregar</p>`;
+  }
 
-  const noDayMsg = !activeDay
-    ? `<p class="map-popup__no-day">Creá o seleccioná un día en el panel</p>`
-    : '';
-
-  const metaRows = [
-    stopData.categoria ? `<div class="map-popup__meta-row">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M4 6h16M4 12h16M4 18h7"/>
-      </svg>
-      <span>${esc(stopData.categoria)}</span>
-    </div>` : '',
-    stopData.telefono ? `<div class="map-popup__meta-row">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91A16 16 0 0 0 13 14.83l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2.02z"/>
-      </svg>
-      <span>${esc(stopData.telefono)}</span>
-    </div>` : '',
-    stopData.address ? `<div class="map-popup__meta-row">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-      <span>${esc(stopData.address)}</span>
-    </div>` : '',
-  ].filter(Boolean).join('');
+  const metaLines = [
+    stopData.categoria ? `<div style="font-size:0.75rem;color:#888;margin-top:2px">${esc(stopData.categoria)}</div>` : '',
+    stopData.region    ? `<div style="font-size:0.75rem;color:#888">${esc(stopData.region)}</div>` : '',
+    stopData.telefono  ? `<div style="font-size:0.75rem;color:#888">📞 ${esc(stopData.telefono)}</div>` : '',
+  ].join('');
 
   const content = `
-    <div class="map-popup">
-      <div class="map-popup__header">
-        <div class="map-popup__tag ${tagCls}">${tagTxt}</div>
-        <h2 class="map-popup__name">${esc(stopData.name)}</h2>
-        ${stopData.region ? `<p class="map-popup__sub">${esc(stopData.region)}</p>` : ''}
-      </div>
-      <div class="map-popup__body">
-        ${stopData.descripcion ? `<p class="map-popup__desc">${esc(stopData.descripcion)}</p>` : ''}
-        ${metaRows ? `<div class="map-popup__meta">${metaRows}</div>` : ''}
-        <button class="map-popup__add-btn ${alreadyAdded ? 'added' : ''}"
-          id="popupAddBtn"
-          ${!activeDay || alreadyAdded ? 'disabled' : ''}
-          aria-label="${esc(btnLabel)}">
-          ${alreadyAdded
-            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Ya agregado'
-            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ${esc(btnLabel)}`
-          }
-        </button>
-        ${noDayMsg}
-      </div>
+    <div style="font-family:sans-serif;min-width:200px;max-width:260px;padding:4px">
+      <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${isEmp ? '#8B3A0F' : '#2E6A80'};margin-bottom:4px">${isEmp ? '⭐ Emprendimiento' : '📍 Lugar'}</div>
+      <div style="font-size:1rem;font-weight:700;color:#2D1205;margin-bottom:4px">${esc(stopData.name)}</div>
+      ${metaLines}
+      ${stopData.descripcion ? `<p style="font-size:0.78rem;color:#555;line-height:1.5;margin:8px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(stopData.descripcion)}</p>` : ''}
+      <div style="margin-top:10px">${btnHTML}</div>
     </div>`;
 
   infoWindow.setContent(content);
   infoWindow.open({ anchor: marker, map: mapInstance });
 
-  // Wire up add button after DOM insertion
   google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
     const btn = document.getElementById('popupAddBtn');
-    if (!btn || alreadyAdded || !activeDay) return;
+    if (!btn || !activeDay || alreadyAdded) return;
 
     btn.addEventListener('click', () => {
       const stop = addStopFromMap(it.id, activeDay.id, stopData);
       if (!stop) return;
 
-      // Update sidebar
-      const card     = document.querySelector(`.day-card[data-day-id="${activeDay.id}"]`);
-      const list     = card?.querySelector(`.stops-list[data-day-id="${activeDay.id}"]`);
-      const emptyEl  = list?.querySelector('.stops-empty');
+      const card    = document.querySelector(`.day-card[data-day-id="${activeDay.id}"]`);
+      const list    = card?.querySelector(`.stops-list[data-day-id="${activeDay.id}"]`);
+      const emptyEl = list?.querySelector('.stops-empty');
       if (emptyEl) emptyEl.remove();
       if (list) list.appendChild(buildStopEl(stop, it.id, activeDay.id));
       if (card) refreshDayBadge(card, it.id, activeDay.id);
       refreshMeta();
 
-      // Feedback
-      btn.classList.add('added');
-      btn.disabled = true;
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Agregado';
+      btn.style.background = '#7A9E6F';
+      btn.textContent      = '✓ Agregado';
+      btn.disabled         = true;
+
       const idx = it.days.findIndex(d => d.id === activeDay.id);
       showToast(`${stopData.name} agregado al Día ${idx + 1}`, 'success');
     });

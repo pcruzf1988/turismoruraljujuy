@@ -800,7 +800,7 @@ input  { font-family: inherit; }
   transition: opacity 0.5s ease;
 }
 
-.map-loading.hidden { opacity: 0; pointer-events: none; }
+.map-loading.hidden { display: none; }
 
 .map-loading__spinner {
   width: 40px; height: 40px;
@@ -828,6 +828,10 @@ input  { font-family: inherit; }
   z-index: 50;
   padding: 30px;
 }
+
+/* El atributo hidden debe ganar sobre display:flex */
+.map-error[hidden],
+.map-loading[hidden] { display: none !important; }
 
 .map-error__card {
   background: rgba(255, 252, 246, 0.85);
