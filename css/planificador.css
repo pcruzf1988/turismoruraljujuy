@@ -179,14 +179,14 @@ input  { font-family: inherit; }
 
 /* Switcher Dropdown */
 .switcher-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0; right: 0;
+  position: fixed;        /* escapa el overflow:hidden del sidebar */
+  /* top/left se setean via JS cuando se abre */
+  width: var(--sidebar-width);
   background: #1E0D05;
   border: 1px solid var(--sidebar-border);
   border-radius: var(--r);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
-  z-index: 200;
+  z-index: 300;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
@@ -606,6 +606,8 @@ input  { font-family: inherit; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
 
 .stop-item__sub {
@@ -615,7 +617,51 @@ input  { font-family: inherit; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
+
+/* ─── Contacto en stop-item ─── */
+
+.stop-item__contact {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.stop-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  text-decoration: none;
+  background: rgba(255, 220, 170, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255,220,170,0.12);
+  transition: all var(--t);
+  line-height: 1.4;
+}
+
+.stop-contact-btn:hover {
+  background: rgba(255, 220, 170, 0.2);
+  color: var(--text-primary);
+}
+
+.stop-contact-btn--wa {
+  background: rgba(37, 211, 102, 0.15);
+  color: #4ade80;
+  border-color: rgba(37, 211, 102, 0.2);
+}
+
+.stop-contact-btn--wa:hover {
+  background: rgba(37, 211, 102, 0.25);
+  color: #86efac;
+}
+
 
 .stop-item__del {
   width: 20px; height: 20px;
