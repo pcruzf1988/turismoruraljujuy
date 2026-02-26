@@ -279,10 +279,7 @@ function addStop(itineraryId, dayId, name) {
   day.stops.push(stop);
   it.updatedAt = Date.now();
   saveState();
-  // Redibujar ruta si el día que se modificó es el activo
-  if (mapInstance && dayId === state.activeDayId) {
-    setTimeout(drawActiveRoute, 100); // pequeño delay para que el DOM se actualice
-  }
+  if (mapInstance && dayId === state.activeDayId) setTimeout(drawActiveRoute, 100);
   return stop;
 }
 
@@ -309,10 +306,6 @@ function addStopFromMap(itineraryId, dayId, data) {
   day.stops.push(stop);
   it.updatedAt = Date.now();
   saveState();
-  // Redibujar ruta si el día que se modificó es el activo
-  if (mapInstance && dayId === state.activeDayId) {
-    setTimeout(drawActiveRoute, 100); // pequeño delay para que el DOM se actualice
-  }
   return stop;
 }
 
@@ -324,9 +317,7 @@ function removeStop(itineraryId, dayId, stopId) {
   if (idx !== -1) day.stops.splice(idx, 1);
   it.updatedAt = Date.now();
   saveState();
-  if (mapInstance && dayId === state.activeDayId) {
-    setTimeout(drawActiveRoute, 100);
-  }
+  if (mapInstance && dayId === state.activeDayId) setTimeout(drawActiveRoute, 100);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -514,22 +505,13 @@ function buildStopEl(stop, itineraryId, dayId) {
   }
 
   const subText = stop.categoria || stop.address || '';
-  const waNum   = (stop.telefono || '').replace(/\D/g, '');
-  const waLink  = waNum ? `https://wa.me/549${waNum.replace(/^0/, '')}` : null;
-  const hasContact = stop.telefono || stop.email;
 
   el.innerHTML = `
+    <div class="stop-item__drag" aria-hidden="true" title="Reordenar (Etapa 3)">⠿</div>
     <div class="stop-item__pin ${pinClass}" aria-hidden="true">${pinIcon}</div>
     <div class="stop-item__info">
       <span class="stop-item__name" title="${esc(stop.name)}">${esc(stop.name)}</span>
       ${subText ? `<span class="stop-item__sub">${esc(subText)}</span>` : ''}
-      ${hasContact ? `<div class="stop-item__contact">
-        ${waLink ? `<a href="${waLink}" target="_blank" rel="noopener" class="stop-contact-btn stop-contact-btn--wa" title="WhatsApp">
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            WA</a>` :
-          (stop.telefono ? `<a href="tel:${esc(stop.telefono)}" class="stop-contact-btn" title="${esc(stop.telefono)}">📞</a>` : '')}
-        ${stop.email ? `<a href="mailto:${esc(stop.email)}" class="stop-contact-btn" title="${esc(stop.email)}">✉️</a>` : ''}
-      </div>` : ''}
     </div>
     <button class="stop-item__del" aria-label="Eliminar parada ${esc(stop.name)}">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
@@ -612,17 +594,28 @@ function activateAddStop(addArea, card, itineraryId, dayId) {
 
   input.focus();
 
+  // Guard para evitar doble commit (blur + click simultáneos)
+  let committed = false;
+
   function commit() {
+    if (committed) return;
+    committed = true;
+
     const name = input.value.trim();
     if (name) {
+      // Agregar inmediatamente con solo el nombre
       const stop = addStop(itineraryId, dayId, name);
       if (stop) {
         const list  = card.querySelector(`.stops-list[data-day-id="${dayId}"]`);
         const empty = list?.querySelector('.stops-empty');
         if (empty) empty.remove();
-        if (list) list.appendChild(buildStopEl(stop, itineraryId, dayId));
+        const stopEl = buildStopEl(stop, itineraryId, dayId);
+        if (list) list.appendChild(stopEl);
         refreshDayBadge(card, itineraryId, dayId);
         refreshMeta();
+
+        // Geocodificar en segundo plano para obtener coordenadas
+        geocodeStop(stop, name, stopEl, itineraryId, dayId);
       }
     }
     restoreBtn();
@@ -634,19 +627,85 @@ function activateAddStop(addArea, card, itineraryId, dayId) {
     addArea.appendChild(buildAddStopBtn(itineraryId, dayId, dayIndex + 1));
   }
 
+  confirmBtn.addEventListener('mousedown', e => e.preventDefault()); // evita blur antes del click
   confirmBtn.addEventListener('click', commit);
-  cancelBtn.addEventListener('click',  restoreBtn);
+  cancelBtn.addEventListener('click', restoreBtn);
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter')  { e.preventDefault(); commit(); }
     if (e.key === 'Escape') { e.preventDefault(); restoreBtn(); }
   });
   input.addEventListener('blur', () => {
     setTimeout(() => {
-      if (!addArea.contains(document.activeElement)) {
+      if (!committed) {
         if (input.value.trim()) commit(); else restoreBtn();
       }
-    }, 160);
+    }, 150);
   });
+}
+
+/**
+ * Geocodifica un nombre de lugar y actualiza las coords del stop en el estado.
+ * Usa Google Maps Geocoder restringiéndolo a Argentina/Jujuy.
+ */
+function geocodeStop(stop, name, stopEl, itineraryId, dayId) {
+  if (!window.google?.maps?.Geocoder) return;
+
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode(
+    {
+      address:               name + ', Jujuy, Argentina',
+      componentRestrictions: { country: 'AR' },
+      bounds: new google.maps.LatLngBounds(
+        { lat: -24.5, lng: -66.5 },  // SW Jujuy
+        { lat: -21.8, lng: -64.9 }   // NE Jujuy
+      ),
+    },
+    (results, status) => {
+      if (status !== 'OK' || !results[0]) return;
+
+      const loc = results[0].geometry.location;
+      const lat = loc.lat();
+      const lng = loc.lng();
+
+      // Actualizar stop en el estado
+      const it  = state.itineraries.find(i => i.id === itineraryId);
+      const day = it?.days.find(d => d.id === dayId);
+      const s   = day?.stops.find(s => s.id === stop.id);
+      if (!s) return;
+
+      s.lat     = lat;
+      s.lng     = lng;
+      s.address = results[0].formatted_address || '';
+      s.type    = 'place';
+      saveState();
+
+      // Marcar el stop-item como clickeable
+      stopEl.classList.add('has-location');
+
+      // Poner un marcador en el mapa
+      if (mapInstance) {
+        const marker = new google.maps.Marker({
+          position: { lat, lng },
+          map:      mapInstance,
+          title:    name,
+          icon: {
+            path:        google.maps.SymbolPath.CIRCLE,
+            scale:       7,
+            fillColor:   '#5E8FA0',
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 2,
+          },
+        });
+        marker.addListener('click', () => openInfoWindow(marker, s));
+      }
+
+      // Redibujar ruta si este día es el activo
+      if (dayId === state.activeDayId) {
+        setTimeout(drawActiveRoute, 200);
+      }
+    }
+  );
 }
 
 function buildAddStopBtn(itineraryId, dayId, dayNumber) {
@@ -942,8 +1001,8 @@ function placeEmprendimientoMarkers(rows) {
     const nombre  = row['Emprendimiento'] || '';
     const rubro   = row['Rubro']          || '';
     const region  = row['Región']         || '';
-    const tel     = row['Teléfono']       || row['Telefono'] || '';
-    const email   = row['Email']          || row['Correo']   || '';
+    const tel     = row['Teléfono( sin guiones ni espacios: 5493884123456)'] || row['Teléfono'] || row['Telefono'] || '';
+    const email   = row['Correo electrónico'] || row['Email'] || row['Correo'] || '';
     const desc    = row['Descripción']    || row['Descripcion'] || '';
     const coords  = parsearCoordsGSheet(row[CSV_COORDS_COL] || '');
 
@@ -996,27 +1055,22 @@ function openInfoWindow(marker, stopData) {
     btnHTML = `<p style="font-size:0.75rem;color:#888;text-align:center;margin:4px 0 0">Seleccioná un día en el panel para agregar</p>`;
   }
 
-  // Construir links de contacto
+  // Construir links de contacto clicables
   const tel    = stopData.telefono || '';
   const email  = stopData.email    || '';
   const waNum  = tel.replace(/\D/g, '');
-  const waLink = waNum ? `https://wa.me/549${waNum.replace(/^0/, '')}` : null;
+  const waLink = waNum ? `https://wa.me/${waNum.replace(/^0/, '')}` : null;
 
   const contactHTML = (tel || email) ? `
-    <div style="display:flex;gap:6px;margin:8px 0 4px;flex-wrap:wrap">
-      ${waLink ? `<a href="${waLink}" target="_blank" rel="noopener"
-          style="display:inline-flex;align-items:center;gap:4px;background:#25D366;color:#fff;
-                 text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          WhatsApp
-        </a>` : (tel ? `<a href="tel:${esc(tel)}"
-          style="display:inline-flex;align-items:center;gap:4px;background:#eee;color:#333;
-                 text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">
-          📞 ${esc(tel)}</a>` : '')}
-      ${email ? `<a href="mailto:${esc(email)}"
-          style="display:inline-flex;align-items:center;gap:4px;background:#eee;color:#333;
-                 text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">
-          ✉️ Email</a>` : ''}
+    <div style="display:flex;gap:5px;margin:8px 0 4px;flex-wrap:wrap">
+      ${waLink
+        ? `<a href="${waLink}" target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:4px;background:#25D366;color:#fff;
+                   text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp</a>`
+        : (tel ? `<a href="tel:${esc(tel)}" style="display:inline-flex;align-items:center;gap:4px;background:#eee;color:#333;text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">📞 ${esc(tel)}</a>` : '')}
+      ${email ? `<a href="mailto:${esc(email)}" style="display:inline-flex;align-items:center;gap:4px;background:#eee;color:#333;text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">✉️ Email</a>` : ''}
     </div>` : '';
 
   const content = `
@@ -1030,11 +1084,7 @@ function openInfoWindow(marker, stopData) {
       </div>
       ${stopData.categoria ? `<div style="font-size:0.72rem;color:#A0522D;margin-bottom:1px">${esc(stopData.categoria)}</div>` : ''}
       ${stopData.region    ? `<div style="font-size:0.68rem;color:#aaa">📍 ${esc(stopData.region)}</div>` : ''}
-      ${stopData.descripcion ? `
-        <p style="font-size:0.76rem;color:#555;line-height:1.55;margin:7px 0 4px;
-                  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">
-          ${esc(stopData.descripcion)}
-        </p>` : ''}
+      ${stopData.descripcion ? `<p style="font-size:0.76rem;color:#555;line-height:1.55;margin:7px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(stopData.descripcion)}</p>` : ''}
       ${contactHTML}
       <div style="margin-top:10px">${btnHTML}</div>
     </div>`;
@@ -1069,61 +1119,293 @@ function openInfoWindow(marker, stopData) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// COMPARTIR / EXPORTAR ITINERARIO
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Genera el HTML completo del itinerario para imprimir o compartir.
+ * Incluye: días, paradas, contactos, disclaimer.
+ */
+/**
+ * Para un stop guardado en el estado, intenta completar los datos de contacto
+ * buscando el emprendimiento correspondiente en los marcadores cargados del CSV.
+ * Útil cuando el stop fue agregado antes de que se corrigieran las columnas.
+ */
+function enrichStopContact(stop) {
+  if (stop.telefono || stop.email) return stop; // ya tiene datos
+  if (!emprendimientoMarkers?.length)           return stop; // mapa no cargado
+
+  const match = emprendimientoMarkers.find(({ data }) => {
+    if (data.name === stop.name) return true;
+    if (stop.lat && stop.lng && data.lat && data.lng) {
+      return Math.abs(data.lat - stop.lat) < 0.0002 && Math.abs(data.lng - stop.lng) < 0.0002;
+    }
+    return false;
+  });
+
+  if (!match) return stop;
+  return {
+    ...stop,
+    telefono:   match.data.telefono   || stop.telefono   || '',
+    email:      match.data.email      || stop.email      || '',
+    descripcion: match.data.descripcion || stop.descripcion || '',
+    categoria:  match.data.categoria  || stop.categoria  || '',
+    region:     match.data.region     || stop.region     || '',
+  };
+}
+
+function buildItineraryHTML(it) {
+  const DAY_COLORS_PRINT = ['#8B4513','#2E6A80','#5A7A3A','#7B5EA7','#C07840','#3A7A6A'];
+
+  const days = it.days.map((day, idx) => {
+    const color    = DAY_COLORS_PRINT[idx % DAY_COLORS_PRINT.length];
+    const dayLabel = `Día ${idx + 1}`;
+    const stops    = day.stops.map(enrichStopContact);
+    const rd       = routeData[day.id]; // segmentos de ruta si están disponibles
+
+    // Resumen de distancia total del día (si existe)
+    const dayDistSummary = rd
+      ? `<span style="font-size:0.8rem;opacity:0.85">🛣️ ${rd.totalDist}${rd.totalTime !== '—' ? ' · ⏱️ ' + rd.totalTime : ''} en ruta</span>`
+      : '';
+
+    const stopsHTML = stops.length === 0
+      ? '<p style="color:#aaa;font-size:0.85rem;font-style:italic">Sin paradas</p>'
+      : stops.map((stop, si) => {
+          const waNum      = (stop.telefono || '').replace(/\D/g, '');
+          const waLink     = waNum ? `https://wa.me/${waNum.replace(/^0/, '')}` : null;
+          const hasContact = stop.telefono || stop.email;
+
+          // Segmento de ruta hacia la siguiente parada
+          const seg         = rd?.segments?.[si];
+          const travelBlock = (seg && si < stops.length - 1) ? `
+            <div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;
+                        padding:7px 10px;background:#f5f0eb;border-radius:8px">
+              <span style="font-size:1rem">🚗</span>
+              <div>
+                <span style="font-size:0.75rem;font-weight:600;color:#6B3A1F">${seg.distance}</span>
+                ${seg.duration !== '—' ? `<span style="font-size:0.72rem;color:#999"> · ${seg.duration} de viaje</span>` : ''}
+              </div>
+            </div>` : '';
+
+          return `
+          <div style="padding:16px 0;${si < stops.length - 1 ? '' : ''}">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:28px;height:28px;border-radius:50%;background:${color};color:#fff;flex-shrink:0;
+                          display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;margin-top:2px">${si + 1}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:1rem;font-weight:700;color:#2D1205;margin-bottom:2px">${esc(stop.name)}</div>
+                ${stop.categoria ? `<div style="font-size:0.75rem;color:#A0522D;margin-bottom:1px">${esc(stop.categoria)} <em style="color:#bbb;font-style:italic;font-size:0.7rem">(el tiempo de permanencia depende de la actividad a realizar)</em></div>` : '<div style="font-size:0.7rem;color:#bbb;font-style:italic;margin-bottom:1px">El tiempo de permanencia depende de la actividad a realizar</div>'}
+                ${stop.region    ? `<div style="font-size:0.72rem;color:#999;margin-bottom:4px">📍 ${esc(stop.region)}</div>` : ''}
+                ${stop.descripcion ? `<p style="font-size:0.79rem;color:#555;line-height:1.55;margin:5px 0 6px;
+                  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(stop.descripcion)}</p>` : ''}
+                ${hasContact ? `
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid #f0ebe4">
+                  ${stop.telefono ? `<span style="font-size:0.78rem;color:#444;font-weight:500">📞 ${esc(stop.telefono)}</span>` : ''}
+                  ${stop.email   ? `<span style="font-size:0.78rem;color:#444;font-weight:500">✉️ ${esc(stop.email)}</span>` : ''}
+                  ${waLink       ? `<span style="font-size:0.78rem;color:#128C7E;font-weight:600">💬 WhatsApp disponible</span>` : ''}
+                </div>` : `<div style="font-size:0.72rem;color:#ccc;margin-top:4px;font-style:italic">Sin datos de contacto registrados</div>`}
+              </div>
+            </div>
+            ${travelBlock}
+            ${si < stops.length - 1 ? `<div style="border-bottom:1px solid #f0ebe4;margin-top:4px"></div>` : ''}
+          </div>`;
+        }).join('');
+
+    return `
+    <div style="break-inside:avoid;margin-bottom:28px;border:1px solid #e8ddd4;border-radius:12px;overflow:hidden">
+      <div style="background:${color};color:#fff;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1rem;font-weight:700">${dayLabel}</span>
+          <span style="font-size:0.8rem;opacity:0.85">${stops.length} parada${stops.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${dayDistSummary}
+      </div>
+      <div style="padding:4px 18px 10px">${stopsHTML}</div>
+    </div>`;
+  }).join('');
+
+  const totalStops = it.days.reduce((acc, d) => acc + d.stops.length, 0);
+  const now        = new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Itinerario: ${esc(it.name)}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #FAF7F4;
+      color: #2D1205;
+      line-height: 1.5;
+    }
+    .page { max-width: 680px; margin: 0 auto; padding: 40px 24px 60px; }
+    .header { text-align: center; margin-bottom: 36px; padding-bottom: 28px; border-bottom: 2px solid #e8ddd4; }
+    .header__logo { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+                    color: #A0522D; margin-bottom: 10px; }
+    .header__title { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem;
+                     font-weight: 700; color: #2D1205; line-height: 1.2; margin-bottom: 8px; }
+    .header__meta  { font-size: 0.82rem; color: #888; }
+    .disclaimer {
+      background: #FFF8F0; border: 1px solid #F0C080; border-radius: 10px;
+      padding: 16px 20px; margin-bottom: 32px;
+      font-size: 0.8rem; color: #7A4A10; line-height: 1.6;
+    }
+    .disclaimer strong { display: block; margin-bottom: 4px; font-size: 0.85rem; }
+    @media print {
+      body { background: #fff; }
+      .page { padding: 20px; }
+      .no-print { display: none !important; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header__logo">Turismo Rural Jujuy · Secretaría de Economía Popular</div>
+    <h1 class="header__title">${esc(it.name)}</h1>
+    <div class="header__meta">
+      ${it.days.length} día${it.days.length !== 1 ? 's' : ''} · ${totalStops} parada${totalStops !== 1 ? 's' : ''} · Generado el ${now}
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <strong>⚠️ Importante: este es un itinerario de planificación</strong>
+    Este documento es una guía de viaje armada con el Planificador de Turismo Rural Jujuy.
+    <strong>No constituye una reserva confirmada.</strong>
+    Para realizar y confirmar cada actividad, es imprescindible <strong>contactar directamente a cada emprendimiento</strong>
+    y coordinar disponibilidad, fechas y condiciones con ellos.
+    Los datos de contacto figuran en cada parada a continuación.
+  </div>
+
+  <!-- Days -->
+  ${days}
+
+  <!-- Footer -->
+  <div style="margin-top:40px;padding-top:20px;border-top:1px solid #e8ddd4;text-align:center;font-size:0.72rem;color:#bbb">
+    Planificador de Turismo Rural Jujuy · turismoruraljujuy.com.ar
+  </div>
+
+</div>
+
+<!-- Botón imprimir (no se imprime) -->
+<div class="no-print" style="position:fixed;bottom:24px;right:24px">
+  <button onclick="window.print()" style="
+    background:#8B4513;color:#fff;border:none;border-radius:8px;
+    padding:12px 22px;font-family:'DM Sans',sans-serif;font-size:0.9rem;
+    font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2)">
+    🖨️ Guardar / Imprimir PDF
+  </button>
+</div>
+
+</body>
+</html>`;
+}
+
+/** Abre el itinerario en una nueva pestaña listo para imprimir / guardar como PDF */
+function openItineraryPrint() {
+  const it = getActive();
+  if (!it) return;
+  if (it.days.length === 0 || it.days.every(d => d.stops.length === 0)) {
+    showToast('Agregá al menos una parada antes de exportar', 'error');
+    return;
+  }
+  const html = buildItineraryHTML(it);
+  const win  = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+/** Arma un texto plano del itinerario y abre WhatsApp Web para compartirlo */
+function shareItineraryWhatsApp() {
+  const it = getActive();
+  if (!it) return;
+
+  let text = `*${it.name}*\n_Itinerario de viaje — Turismo Rural Jujuy_\n\n`;
+
+  it.days.forEach((day, idx) => {
+    const rd = routeData[day.id];
+    text += `*Día ${idx + 1}*`;
+    if (rd) text += ` — 🛣️ ${rd.totalDist}${rd.totalTime !== '—' ? ' · ⏱️ ' + rd.totalTime + ' en ruta' : ''}`;
+    text += '\n';
+    if (day.stops.length === 0) {
+      text += '  Sin paradas\n';
+    } else {
+      day.stops.map(enrichStopContact).forEach((stop, si) => {
+        text += `  ${si + 1}. *${stop.name}*`;
+        if (stop.categoria) text += ` _(${stop.categoria})_`;
+        text += '\n';
+        text += `     _(El tiempo de permanencia depende de la actividad a realizar)_\n`;
+        if (stop.telefono) text += `     📞 ${stop.telefono}\n`;
+        if (stop.email)    text += `     ✉️ ${stop.email}\n`;
+        // Distancia a la siguiente parada
+        const seg = rd?.segments?.[si];
+        if (seg && si < day.stops.length - 1) {
+          text += `     🚗 Hasta la siguiente parada: ${seg.distance}`;
+          if (seg.duration !== '—') text += ` · ${seg.duration} de viaje`;
+          text += '\n';
+        }
+      });
+    }
+    text += '\n';
+  });
+
+  text += '⚠️ *Importante:* este itinerario no es una reserva confirmada. Contactá a cada emprendimiento para coordinar disponibilidad y realizar la reserva.\n\n';
+  text += '_Generado con el Planificador de Turismo Rural Jujuy — turismoruraljujuy.com.ar_';
+
+  const encoded = encodeURIComponent(text);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+// Wire up the buttons
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnPrintItinerary')?.addEventListener('click', openItineraryPrint);
+  document.getElementById('btnShareItinerary')?.addEventListener('click', openItineraryPrint); // También abre la vista de impresión
+  document.getElementById('btnWhatsAppItinerary')?.addEventListener('click', shareItineraryWhatsApp);
+});
+
+
+// ═══════════════════════════════════════════════════════════
 // RUTAS — RECORRIDO DEL DÍA EN EL MAPA
 // ═══════════════════════════════════════════════════════════
 
-/** Almacena los objetos DirectionsRenderer activos (uno por día dibujado) */
 const routeRenderers = {};
-
-/** Polylines de fallback (líneas rectas) cuando Directions falla */
 const routePolylines = [];
+/** Almacena segmentos de distancia por dayId para usar en exportar/compartir */
+const routeData = {};
 
-/**
- * Dibuja la ruta del día activo en el mapa.
- * Usa DirectionsService para rutas reales por camino.
- * Si tiene < 2 paradas con coords, limpia el mapa.
- */
 function drawActiveRoute() {
   if (!mapInstance) return;
-
-  // Limpiar rutas anteriores
   clearAllRoutes();
-
   const day = getActiveDay();
   if (!day) return;
-
   const stops = day.stops.filter(s => s.lat && s.lng);
   if (stops.length < 2) return;
 
-  const it  = getActive();
-  const idx = it?.days.findIndex(d => d.id === day.id) ?? 0;
+  const it    = getActive();
+  const idx   = it?.days.findIndex(d => d.id === day.id) ?? 0;
   const color = DAY_COLORS[idx % DAY_COLORS.length];
 
-  const origin      = { lat: stops[0].lat,              lng: stops[0].lng };
+  const origin      = { lat: stops[0].lat, lng: stops[0].lng };
   const destination = { lat: stops[stops.length-1].lat, lng: stops[stops.length-1].lng };
-  const waypoints   = stops.slice(1, -1).map(s => ({
-    location: { lat: s.lat, lng: s.lng },
-    stopover: true,
-  }));
-
-  const directionsService = new google.maps.DirectionsService();
+  const waypoints   = stops.slice(1, -1).map(s => ({ location: { lat: s.lat, lng: s.lng }, stopover: true }));
 
   const renderer = new google.maps.DirectionsRenderer({
-    map:              mapInstance,
-    suppressMarkers:  true,   // no reemplaza nuestros marcadores
-    polylineOptions: {
-      strokeColor:   color,
-      strokeWeight:  4,
-      strokeOpacity: 0.8,
-    },
+    map:             mapInstance,
+    suppressMarkers: true,
+    polylineOptions: { strokeColor: color, strokeWeight: 4, strokeOpacity: 0.8 },
   });
-
   routeRenderers[day.id] = renderer;
 
-  directionsService.route({
-    origin,
-    destination,
-    waypoints,
+  new google.maps.DirectionsService().route({
+    origin, destination, waypoints,
     travelMode: google.maps.TravelMode.DRIVING,
     region:     'AR',
   }, (result, status) => {
@@ -1131,29 +1413,20 @@ function drawActiveRoute() {
       renderer.setDirections(result);
       showRouteDistances(result, stops, color);
     } else {
-      console.warn('[Ruta] DirectionsService falló:', status, '— usando línea recta');
+      console.warn('[Ruta] DirectionsService:', status, '— usando línea recta');
       drawFallbackRoute(stops, color);
     }
   });
 }
 
-/** Línea recta como fallback si Directions falla */
 function drawFallbackRoute(stops, color) {
   const path = stops.map(s => ({ lat: s.lat, lng: s.lng }));
   const poly = new google.maps.Polyline({
-    path,
-    map:           mapInstance,
-    strokeColor:   color,
-    strokeWeight:  3,
-    strokeOpacity: 0.7,
-    icons: [{
-      icon:   { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3 },
-      offset: '100%',
-    }],
+    path, map: mapInstance,
+    strokeColor: color, strokeWeight: 3, strokeOpacity: 0.7,
+    icons: [{ icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3 }, offset: '100%' }],
   });
   routePolylines.push(poly);
-
-  // Distancias en línea recta
   showFallbackDistances(stops, color);
 }
 
@@ -1162,84 +1435,71 @@ function clearAllRoutes() {
   Object.keys(routeRenderers).forEach(k => delete routeRenderers[k]);
   routePolylines.forEach(p => p.setMap(null));
   routePolylines.length = 0;
-  // Limpiar info panel de distancias
-  const panel = document.getElementById('routeInfoPanel');
-  if (panel) panel.remove();
+  document.getElementById('routeInfoPanel')?.remove();
+  // No borramos routeData — se mantiene para exportar aunque se limpie el mapa
 }
 
-// ═══════════════════════════════════════════════════════════
-// PANEL DE DISTANCIAS
-// ═══════════════════════════════════════════════════════════
-
-/**
- * Muestra las distancias y tiempos reales (desde DirectionsService)
- * en un panel flotante sobre el mapa.
- */
-function showRouteDistances(directionsResult, stops, color) {
-  const legs = directionsResult.routes[0]?.legs ?? [];
+function showRouteDistances(result, stops, color) {
+  const legs = result.routes[0]?.legs ?? [];
   const segments = legs.map((leg, i) => ({
-    from:     stops[i]?.name     ?? '—',
-    to:       stops[i+1]?.name   ?? '—',
-    distance: leg.distance?.text ?? '—',
-    duration: leg.duration?.text ?? '—',
+    from: stops[i]?.name ?? '—', to: stops[i+1]?.name ?? '—',
+    distance: leg.distance?.text ?? '—', duration: leg.duration?.text ?? '—',
   }));
-
   const totalDist = legs.reduce((acc, l) => acc + (l.distance?.value ?? 0), 0);
   const totalTime = legs.reduce((acc, l) => acc + (l.duration?.value ?? 0), 0);
-
+  // Guardar para exportar/compartir
+  const day = getActiveDay();
+  if (day) routeData[day.id] = { segments, totalDist: formatDistance(totalDist), totalTime: formatDuration(totalTime) };
   renderRoutePanel(segments, formatDistance(totalDist), formatDuration(totalTime), color);
 }
 
 function showFallbackDistances(stops, color) {
   const segments = [];
-  let totalDist = 0;
+  let totalDist  = 0;
   for (let i = 0; i < stops.length - 1; i++) {
     const d = haversineKm(stops[i], stops[i+1]);
     totalDist += d;
-    segments.push({
-      from:     stops[i].name,
-      to:       stops[i+1].name,
-      distance: d.toFixed(1) + ' km (aprox.)',
-      duration: '—',
-    });
+    segments.push({ from: stops[i].name, to: stops[i+1].name, distance: d.toFixed(1) + ' km (aprox.)', duration: '—' });
   }
+  // Guardar para exportar/compartir
+  const day = getActiveDay();
+  if (day) routeData[day.id] = { segments, totalDist: totalDist.toFixed(1) + ' km', totalTime: '—' };
   renderRoutePanel(segments, totalDist.toFixed(1) + ' km', '—', color);
 }
 
 function renderRoutePanel(segments, totalDist, totalTime, color) {
-  // Remove old panel
   document.getElementById('routeInfoPanel')?.remove();
+  const day    = getActiveDay();
+  const it     = getActive();
+  const dayIdx = it?.days.findIndex(d => d.id === day?.id) ?? 0;
 
-  const panel = document.createElement('div');
-  panel.id = 'routeInfoPanel';
-  panel.style.cssText = `
-    position: absolute; bottom: 32px; right: 12px; z-index: 40;
-    background: rgba(255,252,248,0.96); backdrop-filter: blur(12px);
-    border: 1px solid rgba(139,90,43,0.15); border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.14); padding: 14px 16px;
-    max-width: 260px; max-height: 60vh; overflow-y: auto;
-    font-family: 'DM Sans', sans-serif;
-  `;
-
-  const day     = getActiveDay();
-  const it      = getActive();
-  const dayIdx  = it?.days.findIndex(d => d.id === day?.id) ?? 0;
+  const panel  = document.createElement('div');
+  panel.id     = 'routeInfoPanel';
+  panel.style.cssText = [
+    'position:absolute', 'bottom:32px', 'right:12px', 'z-index:40',
+    'background:rgba(255,252,248,0.96)', 'backdrop-filter:blur(12px)',
+    'border:1px solid rgba(139,90,43,0.15)', 'border-radius:14px',
+    'box-shadow:0 8px 32px rgba(0,0,0,0.14)', 'padding:14px 16px',
+    'max-width:260px', 'max-height:60vh', 'overflow-y:auto',
+    "font-family:'DM Sans',sans-serif",
+  ].join(';');
 
   panel.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:7px">
-        <span style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block"></span>
         <span style="font-size:0.78rem;font-weight:700;color:#3D1F05">Día ${dayIdx + 1} — Recorrido</span>
       </div>
       <button onclick="document.getElementById('routeInfoPanel').remove()"
-        style="background:none;border:none;cursor:pointer;color:#aaa;font-size:1rem;line-height:1;padding:0 2px">×</button>
+        style="background:none;border:none;cursor:pointer;color:#aaa;font-size:1.1rem;line-height:1;padding:0 2px">×</button>
     </div>
     <div style="font-size:0.7rem;color:#888;margin-bottom:10px;display:flex;gap:12px">
       <span>🛣️ ${totalDist}</span>
       ${totalTime !== '—' ? `<span>⏱️ ${totalTime}</span>` : ''}
     </div>
     ${segments.map((seg, i) => `
-      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding-bottom:8px;${i < segments.length-1 ? 'border-bottom:1px solid rgba(0,0,0,0.06)' : ''}">
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;padding-bottom:8px;
+                  ${i < segments.length - 1 ? 'border-bottom:1px solid rgba(0,0,0,0.06)' : ''}">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:2px">
           <span style="width:6px;height:6px;border-radius:50%;background:${color};display:block"></span>
           <span style="width:1px;height:14px;background:${color};opacity:0.4;display:block"></span>
@@ -1250,32 +1510,27 @@ function renderRoutePanel(segments, totalDist, totalTime, color) {
           <div style="font-size:0.68rem;color:#aaa;margin:1px 0">${seg.distance}${seg.duration !== '—' ? ' · ' + seg.duration : ''}</div>
           <div style="font-size:0.72rem;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(seg.to)}</div>
         </div>
-      </div>`).join('')}
-  `;
+      </div>`).join('')}`;
 
   document.getElementById('mapArea')?.appendChild(panel);
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-
 function haversineKm(a, b) {
-  const R = 6371;
+  const R    = 6371;
   const dLat = (b.lat - a.lat) * Math.PI / 180;
   const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const h = Math.sin(dLat/2)**2 +
+  const h    = Math.sin(dLat/2)**2 +
     Math.cos(a.lat * Math.PI/180) * Math.cos(b.lat * Math.PI/180) * Math.sin(dLng/2)**2;
   return R * 2 * Math.asin(Math.sqrt(h));
 }
 
-function formatDistance(meters) {
-  return meters >= 1000 ? (meters/1000).toFixed(1) + ' km' : meters + ' m';
+function formatDistance(m) {
+  return m >= 1000 ? (m/1000).toFixed(1) + ' km' : m + ' m';
 }
 
-function formatDuration(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m} min`;
+function formatDuration(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m} min`;
 }
 
 
