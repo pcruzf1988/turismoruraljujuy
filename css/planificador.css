@@ -21,13 +21,6 @@
   --accent-glow:  rgba(205, 133, 63, 0.12);
   --accent-dark:  #A0621F;
 
-  --day-c0: #CD853F;
-  --day-c1: #C06A3A;
-  --day-c2: #7A9E6F;
-  --day-c3: #9280B8;
-  --day-c4: #5E8FA0;
-  --day-c5: #B07878;
-
   --map-bg:    #EBE0CE;
   --map-bg-end:#DDD0B8;
 
@@ -346,6 +339,31 @@ input  { font-family: inherit; }
 .mode-toggle__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mode-toggle__btn--active { background: var(--accent); color: #1A0800; font-weight: 700; }
 
+/* Undo / Redo */
+.undo-redo-group {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.undo-redo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  transition: background var(--t), color var(--t);
+}
+
+.undo-redo-btn:hover:not(:disabled) {
+  background: var(--sidebar-surface);
+  color: var(--text-primary);
+}
+
+.undo-redo-btn:disabled { opacity: 0.3; cursor: default; }
+.undo-redo-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .date-range-row { display: flex; align-items: center; gap: 8px; flex: 1; }
 
 .date-input {
@@ -450,6 +468,10 @@ input  { font-family: inherit; }
 .day-card__drag { color: var(--text-dim); font-size: 0.95rem; cursor: grab; flex-shrink: 0; opacity: 0.4; }
 .day-card__drag:active { cursor: grabbing; }
 
+/* DnD estados — day cards */
+.day-card.dnd-dragging { opacity: 0.38; box-shadow: none; }
+.day-card.dnd-over     { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+
 .day-card__label { flex: 1; min-width: 0; }
 
 .day-card__number {
@@ -521,13 +543,17 @@ input  { font-family: inherit; }
 .day-card__delete-btn:focus-visible { opacity: 1; outline: 2px solid var(--danger); outline-offset: 2px; }
 
 /* Day Card Body */
+/* Day Card Body — animación de colapso con grid (fluida, sin truncar contenido) */
 .day-card__body {
-  overflow: hidden;
-  max-height: 800px;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.day-card.collapsed .day-card__body { max-height: 0; }
+.day-card.collapsed .day-card__body { grid-template-rows: 0fr; }
+
+/* Wrapper interno necesario para que overflow:hidden no corte la animación */
+.day-card__body-inner { overflow: hidden; }
 
 /* ─── Stops ─── */
 
@@ -583,6 +609,10 @@ input  { font-family: inherit; }
 
 .stop-item:hover .stop-item__drag { opacity: 0.45; }
 
+/* DnD estados — stop items */
+.stop-item.dnd-dragging { opacity: 0.35; }
+.stop-item.dnd-over     { border-color: var(--accent); background: rgba(205, 133, 63, 0.06); }
+
 .stop-item__pin {
   width: 24px; height: 24px;
   border-radius: 50%;
@@ -597,6 +627,28 @@ input  { font-family: inherit; }
 /* Emprendimiento stop pin uses a star */
 .stop-item__pin.type-emprendimiento { background: rgba(192, 106, 58, 0.18); color: #C06A3A; }
 .stop-item__pin.type-place          { background: rgba(94, 143, 160, 0.18); color: #5E8FA0; }
+
+/* Estado de geocodificación en curso — spinner en el pin */
+.stop-item.geocoding .stop-item__pin {
+  background: rgba(205, 133, 63, 0.08);
+  color: transparent; /* ocultar ícono SVG mientras anima */
+}
+
+.stop-item.geocoding .stop-item__pin::after {
+  content: '';
+  display: block;
+  width: 10px; height: 10px;
+  border: 1.5px solid rgba(205, 133, 63, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Texto de subtítulo mientras geocodifica */
+.stop-item.geocoding .stop-item__sub {
+  color: var(--accent);
+  font-style: italic;
+}
 
 .stop-item__info { flex: 1; min-width: 0; }
 
@@ -939,21 +991,27 @@ input  { font-family: inherit; }
 
 /* Active day pill */
 .active-day-pill {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 20px;
-  background: rgba(139, 90, 43, 0.08);
-  border: 1px solid rgba(139, 90, 43, 0.14);
+  gap: 7px;
+  padding: 7px 18px;
+  background: rgba(255, 252, 248, 0.93);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 90, 43, 0.18);
+  border-radius: 50px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
   white-space: nowrap;
-  flex-shrink: 0;
-  cursor: default;
   transition: all var(--t);
 }
 
 .active-day-pill__dot {
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--accent);
   flex-shrink: 0;
@@ -965,10 +1023,10 @@ input  { font-family: inherit; }
 }
 
 .active-day-pill__label {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #6B3D15;
-  max-width: 130px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
 }

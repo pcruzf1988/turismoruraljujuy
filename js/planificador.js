@@ -23,6 +23,46 @@ function esc(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => map[c]);
 }
 
+/**
+ * Retarda la ejecución de fn hasta que pasen `ms` ms sin nuevas llamadas.
+ * Usado para evitar guardar el estado en cada keystroke del título.
+ * @param {Function} fn
+ * @param {number} ms
+ */
+function debounce(fn, ms) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+/**
+ * Construye un link de WhatsApp con el prefijo de país Argentina (+54) correctamente.
+ * Acepta números locales (con 0 inicial), con o sin código de país.
+ * @param {string} tel - Número de teléfono en cualquier formato
+ * @returns {string|null} URL de wa.me o null si el número no es válido
+ */
+function buildWaLink(tel) {
+  if (!tel) return null;
+  const digits = tel.replace(/\D/g, '');
+  if (!digits) return null;
+  // Si ya empieza con 54 (código de Argentina) lo usamos tal cual
+  // Si empieza con 0 (formato local) lo quitamos y agregamos 54
+  // Caso restante: agregamos 54 directamente
+  let normalized;
+  if (digits.startsWith('54')) {
+    normalized = digits;
+  } else if (digits.startsWith('0')) {
+    normalized = '54' + digits.slice(1);
+  } else {
+    normalized = '54' + digits;
+  }
+  // Validación mínima: Argentina tiene números de 10 dígitos sin código de país
+  if (normalized.length < 12) return null;
+  return `https://wa.me/${normalized}`;
+}
+
 function dateAddDays(isoDate, n) {
   if (!isoDate) return null;
   const d = new Date(isoDate + 'T00:00:00');
@@ -84,6 +124,13 @@ const DAY_COLORS = [
   '#CD853F', '#C06A3A', '#7A9E6F',
   '#9280B8', '#5E8FA0', '#B07878',
 ];
+
+// Inyectar los colores como Custom Properties CSS para que :root los tenga disponibles.
+// Esto elimina la duplicación entre JS y CSS — DAY_COLORS es la única fuente de verdad.
+(function injectDayColorVars() {
+  const root  = document.documentElement;
+  DAY_COLORS.forEach((color, i) => root.style.setProperty(`--day-c${i}`, color));
+})();
 
 const TITLE_PLACEHOLDER = {
   es: 'Nombre del itinerario…',
@@ -177,11 +224,74 @@ function loadState() {
   if (state.activeDayId && !it?.days.find(d => d.id === state.activeDayId)) {
     state.activeDayId = it?.days[0]?.id ?? null;
   }
+
+  // Capturar el snapshot inicial en el stack de undo (sin disparar saveState completo)
+  undoStack.push(JSON.stringify(state));
 }
 
 function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+  // Notificar al sistema undo/redo que el estado cambió
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > UNDO_MAX) undoStack.shift();
+  redoStack.length = 0; // cualquier cambio limpia el redo
+  refreshUndoRedoBtns();
 }
+
+// ─── Undo / Redo ───
+
+const UNDO_MAX  = 40;
+const undoStack = []; // historial de estados anteriores (JSON strings)
+const redoStack = []; // estados deshechados que se pueden rehacer
+
+function refreshUndoRedoBtns() {
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  if (undoBtn) undoBtn.disabled = undoStack.length <= 1;
+  if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+}
+
+function applySnapshot(snapshot) {
+  try {
+    const parsed = JSON.parse(snapshot);
+    if (parsed?.itineraries) {
+      state = { ...state, ...parsed };
+      try { localStorage.setItem(STORAGE_KEY, snapshot); } catch (_) {}
+      render();
+      refreshActiveDayUI();
+      refreshUndoRedoBtns();
+    }
+  } catch (_) {}
+}
+
+function undo() {
+  if (undoStack.length <= 1) return;
+  const current = undoStack.pop();
+  redoStack.push(current);
+  applySnapshot(undoStack[undoStack.length - 1]);
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  const next = redoStack.pop();
+  undoStack.push(next);
+  applySnapshot(next);
+}
+
+// Atajo de teclado global: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
+document.addEventListener('keydown', e => {
+  const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)
+    || e.target.isContentEditable;
+  if (isInput) return; // no interferir con edición de texto
+
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+    e.preventDefault();
+    undo();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+    e.preventDefault();
+    redo();
+  }
+});
 
 // ─── Selectors ───
 
@@ -306,6 +416,12 @@ function addStopFromMap(itineraryId, dayId, data) {
   day.stops.push(stop);
   it.updatedAt = Date.now();
   saveState();
+  // Redibujar ruta si el stop fue agregado al día activo (igual que addStop)
+  if (mapInstance && dayId === state.activeDayId) {
+    setTimeout(drawActiveRoute, 100);
+    // fitBounds para que el nuevo stop quede visible en el mapa
+    fitMapToDayStops(dayId);
+  }
   return stop;
 }
 
@@ -314,7 +430,15 @@ function removeStop(itineraryId, dayId, stopId) {
   const day = it?.days.find(d => d.id === dayId);
   if (!day) return;
   const idx = day.stops.findIndex(s => s.id === stopId);
-  if (idx !== -1) day.stops.splice(idx, 1);
+  if (idx !== -1) {
+    // Eliminar el marcador del mapa si el stop tenía uno asociado
+    const stop = day.stops[idx];
+    if (stop._marker) {
+      stop._marker.setMap(null);
+      stop._marker = null;
+    }
+    day.stops.splice(idx, 1);
+  }
   it.updatedAt = Date.now();
   saveState();
   if (mapInstance && dayId === state.activeDayId) setTimeout(drawActiveRoute, 100);
@@ -344,30 +468,55 @@ const confirmTextEl    = document.getElementById('confirmText');
 const confirmOkBtn     = document.getElementById('confirmOk');
 const confirmCancelBtn = document.getElementById('confirmCancel');
 
-let _confirmResolve = null;
+let _confirmResolve  = null;
+let _confirmPrevFocus = null; // elemento que tenía el foco antes de abrir el modal
 
-function confirm(title, text) {
+function showConfirmModal(title, text) {
   return new Promise(resolve => {
-    _confirmResolve = resolve;
+    _confirmResolve   = resolve;
+    _confirmPrevFocus = document.activeElement; // guardar foco actual para restaurarlo al cerrar
     confirmTitleEl.textContent = title;
     confirmTextEl.textContent  = text;
     confirmOverlay.classList.add('open');
     confirmOverlay.setAttribute('aria-hidden', 'false');
-    confirmOkBtn.focus();
+    // Foco inicial en el botón Cancel (acción segura por defecto — WCAG 3.3.4)
+    confirmCancelBtn.focus();
   });
 }
 
 function closeConfirm(result) {
   confirmOverlay.classList.remove('open');
   confirmOverlay.setAttribute('aria-hidden', 'true');
+  // Restaurar foco al elemento que lo tenía antes de abrir el modal
+  if (_confirmPrevFocus && typeof _confirmPrevFocus.focus === 'function') {
+    _confirmPrevFocus.focus();
+  }
+  _confirmPrevFocus = null;
   if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
 }
 
 confirmOkBtn.addEventListener('click',     () => closeConfirm(true));
 confirmCancelBtn.addEventListener('click', () => closeConfirm(false));
 confirmOverlay.addEventListener('click',   e => { if (e.target === confirmOverlay) closeConfirm(false); });
-document.addEventListener('keydown',       e => {
-  if (e.key === 'Escape' && confirmOverlay.classList.contains('open')) closeConfirm(false);
+
+// Focus trap: mantener el foco encerrado dentro del modal mientras está abierto
+confirmOverlay.addEventListener('keydown', e => {
+  if (!confirmOverlay.classList.contains('open')) return;
+
+  if (e.key === 'Escape') {
+    closeConfirm(false);
+    return;
+  }
+
+  // Ciclar foco sólo entre los dos botones del modal (Tab / Shift+Tab)
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (document.activeElement === confirmCancelBtn) {
+      confirmOkBtn.focus();
+    } else {
+      confirmCancelBtn.focus();
+    }
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -424,7 +573,7 @@ function refreshSwitcherList() {
     item.querySelector('[data-delete-id]').addEventListener('click', async e => {
       e.stopPropagation();
       if (state.itineraries.length === 1) return;
-      const ok = await confirm('Eliminar itinerario', `¿Eliminar "${it.name}"? Esta acción no se puede deshacer.`);
+      const ok = await showConfirmModal('Eliminar itinerario', `¿Eliminar "${it.name}"? Esta acción no se puede deshacer.`);
       if (ok) { deleteItinerary(it.id); render(); }
     });
     list.appendChild(item);
@@ -507,7 +656,7 @@ function buildStopEl(stop, itineraryId, dayId) {
   const subText = stop.categoria || stop.address || '';
 
   el.innerHTML = `
-    <div class="stop-item__drag" aria-hidden="true" title="Reordenar (Etapa 3)">⠿</div>
+    <div class="stop-item__drag" aria-hidden="true" title="Arrastrá para reordenar">⠿</div>
     <div class="stop-item__pin ${pinClass}" aria-hidden="true">${pinIcon}</div>
     <div class="stop-item__info">
       <span class="stop-item__name" title="${esc(stop.name)}">${esc(stop.name)}</span>
@@ -537,6 +686,9 @@ function buildStopEl(stop, itineraryId, dayId) {
     refreshMeta();
     ensureStopsEmpty(card, dayId);
   });
+
+  // Activar drag-and-drop — la lista padre se resuelve en el momento del drop
+  enableStopDnD(el, itineraryId, dayId);
 
   return el;
 }
@@ -650,6 +802,22 @@ function activateAddStop(addArea, card, itineraryId, dayId) {
 function geocodeStop(stop, name, stopEl, itineraryId, dayId) {
   if (!window.google?.maps?.Geocoder) return;
 
+  // Mostrar feedback visual de carga inmediatamente
+  stopEl.classList.add('geocoding');
+  const subEl = stopEl.querySelector('.stop-item__sub');
+  if (subEl) {
+    subEl.textContent = 'Buscando ubicación…';
+  } else {
+    // Si el stop no tenía subtexto, crear el span
+    const info = stopEl.querySelector('.stop-item__info');
+    if (info) {
+      const span = document.createElement('span');
+      span.className = 'stop-item__sub';
+      span.textContent = 'Buscando ubicación…';
+      info.appendChild(span);
+    }
+  }
+
   const geocoder = new google.maps.Geocoder();
   geocoder.geocode(
     {
@@ -661,7 +829,15 @@ function geocodeStop(stop, name, stopEl, itineraryId, dayId) {
       ),
     },
     (results, status) => {
-      if (status !== 'OK' || !results[0]) return;
+      // Quitar siempre el estado de carga al terminar (éxito o fallo)
+      stopEl.classList.remove('geocoding');
+
+      if (status !== 'OK' || !results[0]) {
+        // Sin resultados: limpiar el subtexto de "buscando"
+        const sub = stopEl.querySelector('.stop-item__sub');
+        if (sub && sub.textContent === 'Buscando ubicación…') sub.textContent = '';
+        return;
+      }
 
       const loc = results[0].geometry.location;
       const lat = loc.lat();
@@ -670,19 +846,24 @@ function geocodeStop(stop, name, stopEl, itineraryId, dayId) {
       // Actualizar stop en el estado
       const it  = state.itineraries.find(i => i.id === itineraryId);
       const day = it?.days.find(d => d.id === dayId);
-      const s   = day?.stops.find(s => s.id === stop.id);
-      if (!s) return;
+      const foundStop = day?.stops.find(st => st.id === stop.id);
+      // Verificar que el stop no fue eliminado durante el geocoding asíncrono
+      if (!foundStop) return;
 
-      s.lat     = lat;
-      s.lng     = lng;
-      s.address = results[0].formatted_address || '';
-      s.type    = 'place';
+      foundStop.lat     = lat;
+      foundStop.lng     = lng;
+      foundStop.address = results[0].formatted_address || '';
+      foundStop.type    = 'place';
       saveState();
+
+      // Actualizar el subtexto con la dirección real obtenida
+      const subSpan = stopEl.querySelector('.stop-item__sub');
+      if (subSpan) subSpan.textContent = foundStop.address;
 
       // Marcar el stop-item como clickeable
       stopEl.classList.add('has-location');
 
-      // Poner un marcador en el mapa
+      // Poner un marcador en el mapa y guardar referencia para poder limpiarlo después
       if (mapInstance) {
         const marker = new google.maps.Marker({
           position: { lat, lng },
@@ -697,12 +878,16 @@ function geocodeStop(stop, name, stopEl, itineraryId, dayId) {
             strokeWeight: 2,
           },
         });
-        marker.addListener('click', () => openInfoWindow(marker, s));
+        // Guardar referencia en el stop para poder eliminarlo si el usuario borra la parada
+        foundStop._marker = marker;
+        marker.addListener('click', () => openInfoWindow(marker, foundStop));
       }
 
       // Redibujar ruta si este día es el activo
       if (dayId === state.activeDayId) {
         setTimeout(drawActiveRoute, 200);
+        // Ajustar la vista del mapa para incluir el nuevo punto
+        fitMapToDayStops(dayId);
       }
     }
   );
@@ -742,7 +927,7 @@ function buildDayCard(it, day, index) {
   card.innerHTML = `
     <div class="day-card__header" role="button" tabindex="0"
       aria-expanded="${!day.collapsed}" aria-controls="day-body-${day.id}">
-      <div class="day-card__drag" aria-hidden="true" title="Reordenar (Etapa 3)">⠿</div>
+      <div class="day-card__drag" aria-hidden="true" title="Arrastrá para reordenar">⠿</div>
       <div class="day-card__label">
         <span class="day-card__number">${esc(num)}</span>
         ${date ? `<span class="day-card__date">${esc(date)}</span>` : ''}
@@ -761,10 +946,12 @@ function buildDayCard(it, day, index) {
     </div>
 
     <div class="day-card__body" id="day-body-${day.id}">
-      <div class="stops-list" role="list" aria-label="Paradas del ${esc(num)}" data-day-id="${day.id}">
-        ${day.stops.length === 0 ? '<div class="stops-empty">Sin paradas aún</div>' : ''}
+      <div class="day-card__body-inner">
+        <div class="stops-list" role="list" aria-label="Paradas del ${esc(num)}" data-day-id="${day.id}">
+          ${day.stops.length === 0 ? '<div class="stops-empty">Sin paradas aún</div>' : ''}
+        </div>
+        <div class="add-stop-area" data-day-id="${day.id}"></div>
       </div>
-      <div class="add-stop-area" data-day-id="${day.id}"></div>
     </div>`;
 
   // Stops
@@ -800,7 +987,7 @@ function buildDayCard(it, day, index) {
     const msg = stopCount > 0
       ? `¿Eliminar el ${num}? También se eliminarán sus ${stopCount} parada${stopCount !== 1 ? 's' : ''}.`
       : `¿Eliminar el ${num}?`;
-    const ok = await confirm('Eliminar día', msg);
+    const ok = await showConfirmModal('Eliminar día', msg);
     if (!ok) return;
     removeDay(it.id, day.id);
     card.remove();
@@ -816,6 +1003,10 @@ function buildDayCard(it, day, index) {
     if (!btn) return;
     activateAddStop(addArea, card, it.id, day.id);
   });
+
+  // Activar drag-and-drop para reordenar días
+  const daysContainer = document.getElementById('daysList');
+  if (daysContainer) enableDayDnD(card, daysContainer, it.id);
 
   return card;
 }
@@ -896,6 +1087,11 @@ const switcherDropdown = document.getElementById('switcherDropdown');
 
 function openSwitcherDropdown()  {
   refreshSwitcherList();
+  // Posicionar el dropdown fijo relativo al trigger para que no quede en top:0/left:0
+  const rect = switcherTrigger.getBoundingClientRect();
+  switcherDropdown.style.top  = rect.bottom + 6 + 'px';
+  switcherDropdown.style.left = rect.left + 'px';
+  switcherDropdown.style.width = rect.width + 'px';
   switcherDropdown.classList.add('open');
   switcherTrigger.setAttribute('aria-expanded', 'true');
 }
@@ -975,13 +1171,25 @@ function parsearCoordsGSheet(ubicacion) {
   return (!isNaN(lat) && !isNaN(lng)) ? { lat, lng } : null;
 }
 
+const CSV_CACHE_KEY = 'turismo_jujuy_csv_cache';
+
 async function loadEmprendimientos() {
   try {
+    // Intentar usar el cache de sessionStorage (se limpia al cerrar el tab)
+    const cached = sessionStorage.getItem(CSV_CACHE_KEY);
+    if (cached) {
+      placeEmprendimientoMarkers(parseCSV(cached));
+      return;
+    }
+
     const res  = await fetch(CSV_URL);
     if (!res.ok) { console.warn('[CSV] No encontrado:', CSV_URL); return; }
     const text = await res.text();
-    const rows = parseCSV(text);
-    placeEmprendimientoMarkers(rows);
+
+    // Guardar en cache para esta sesión
+    try { sessionStorage.setItem(CSV_CACHE_KEY, text); } catch (_) { /* cuota excedida: ignorar */ }
+
+    placeEmprendimientoMarkers(parseCSV(text));
   } catch (err) {
     console.warn('[CSV] Error al cargar:', err.message);
   }
@@ -995,8 +1203,16 @@ function getRegionColor(row) {
   return REGION_COLORS.default;
 }
 
+/** Referencia al clusterer activo, para poder destruirlo si se recarga el CSV */
+let clustererInstance = null;
+
 function placeEmprendimientoMarkers(rows) {
+  // Destruir clusterer anterior si existe (evita duplicar al recargar)
+  if (clustererInstance) { clustererInstance.clearMarkers(); clustererInstance = null; }
+
   emprendimientoMarkers = [];
+  const rawMarkers = [];
+
   for (const row of rows) {
     const nombre  = row['Emprendimiento'] || '';
     const rubro   = row['Rubro']          || '';
@@ -1009,13 +1225,11 @@ function placeEmprendimientoMarkers(rows) {
     if (!nombre || nombre.length < 3 || !coords) continue;
 
     const { lat, lng } = coords;
-    const color  = getRegionColor(row);
 
-    // Marcador simple — sin ícono SVG personalizado para evitar errores
     const marker = new google.maps.Marker({
       position: { lat, lng },
-      map:      mapInstance,
       title:    nombre,
+      // No asignamos map aquí — lo gestiona el clusterer
     });
 
     const stopData = {
@@ -1026,7 +1240,20 @@ function placeEmprendimientoMarkers(rows) {
 
     marker.addListener('click', () => openInfoWindow(marker, stopData));
     emprendimientoMarkers.push({ marker, data: stopData });
+    rawMarkers.push(marker);
   }
+
+  // Usar MarkerClusterer si está disponible, si no, añadir markers directamente al mapa
+  if (window.markerClusterer?.MarkerClusterer) {
+    clustererInstance = new window.markerClusterer.MarkerClusterer({
+      map:     mapInstance,
+      markers: rawMarkers,
+    });
+  } else {
+    // Fallback: sin clustering
+    rawMarkers.forEach(m => m.setMap(mapInstance));
+  }
+
   console.log(`[Mapa] ${emprendimientoMarkers.length} emprendimientos cargados`);
 }
 
@@ -1058,8 +1285,7 @@ function openInfoWindow(marker, stopData) {
   // Construir links de contacto clicables
   const tel    = stopData.telefono || '';
   const email  = stopData.email    || '';
-  const waNum  = tel.replace(/\D/g, '');
-  const waLink = waNum ? `https://wa.me/${waNum.replace(/^0/, '')}` : null;
+  const waLink = buildWaLink(tel);
 
   const contactHTML = (tel || email) ? `
     <div style="display:flex;gap:5px;margin:8px 0 4px;flex-wrap:wrap">
@@ -1155,10 +1381,9 @@ function enrichStopContact(stop) {
 }
 
 function buildItineraryHTML(it) {
-  const DAY_COLORS_PRINT = ['#8B4513','#2E6A80','#5A7A3A','#7B5EA7','#C07840','#3A7A6A'];
-
+  // Usar DAY_COLORS (única fuente de verdad) también para la vista de impresión
   const days = it.days.map((day, idx) => {
-    const color    = DAY_COLORS_PRINT[idx % DAY_COLORS_PRINT.length];
+    const color    = DAY_COLORS[idx % DAY_COLORS.length];
     const dayLabel = `Día ${idx + 1}`;
     const stops    = day.stops.map(enrichStopContact);
     const rd       = routeData[day.id]; // segmentos de ruta si están disponibles
@@ -1171,8 +1396,7 @@ function buildItineraryHTML(it) {
     const stopsHTML = stops.length === 0
       ? '<p style="color:#aaa;font-size:0.85rem;font-style:italic">Sin paradas</p>'
       : stops.map((stop, si) => {
-          const waNum      = (stop.telefono || '').replace(/\D/g, '');
-          const waLink     = waNum ? `https://wa.me/${waNum.replace(/^0/, '')}` : null;
+          const waLink     = buildWaLink(stop.telefono || '');
           const hasContact = stop.telefono || stop.email;
 
           // Segmento de ruta hacia la siguiente parada
@@ -1319,6 +1543,10 @@ function openItineraryPrint() {
   }
   const html = buildItineraryHTML(it);
   const win  = window.open('', '_blank');
+  if (!win) {
+    showToast('Tu navegador bloqueó la ventana emergente. Habilitá los popups para este sitio e intentá de nuevo.', 'error', 4500);
+    return;
+  }
   win.document.write(html);
   win.document.close();
 }
@@ -1367,9 +1595,77 @@ function shareItineraryWhatsApp() {
 // Wire up the buttons
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnPrintItinerary')?.addEventListener('click', openItineraryPrint);
-  document.getElementById('btnShareItinerary')?.addEventListener('click', openItineraryPrint); // También abre la vista de impresión
+  document.getElementById('btnShareItinerary')?.addEventListener('click', shareItinerary);
   document.getElementById('btnWhatsAppItinerary')?.addEventListener('click', shareItineraryWhatsApp);
+  document.getElementById('undoBtn')?.addEventListener('click', undo);
+  document.getElementById('redoBtn')?.addEventListener('click', redo);
 });
+
+/**
+ * Comparte el itinerario usando la Web Share API nativa del dispositivo.
+ * Si no está disponible (desktop sin soporte), copia el texto al portapapeles
+ * y muestra un toast de confirmación como fallback.
+ */
+async function shareItinerary() {
+  const it = getActive();
+  if (!it) return;
+  if (it.days.length === 0 || it.days.every(d => d.stops.length === 0)) {
+    showToast('Agregá al menos una parada antes de compartir', 'error');
+    return;
+  }
+
+  // Armar el texto plano del itinerario (igual que WhatsApp pero sin markdown)
+  let text = `${it.name}\nItinerario de viaje — Turismo Rural Jujuy\n\n`;
+  it.days.forEach((day, idx) => {
+    const rd = routeData[day.id];
+    text += `Día ${idx + 1}`;
+    if (rd) text += ` — ${rd.totalDist}${rd.totalTime !== '—' ? ' · ' + rd.totalTime + ' en ruta' : ''}`;
+    text += '\n';
+    if (day.stops.length === 0) {
+      text += '  Sin paradas\n';
+    } else {
+      day.stops.map(enrichStopContact).forEach((stop, si) => {
+        text += `  ${si + 1}. ${stop.name}`;
+        if (stop.categoria) text += ` (${stop.categoria})`;
+        text += '\n';
+        if (stop.telefono) text += `     📞 ${stop.telefono}\n`;
+        if (stop.email)    text += `     ✉️ ${stop.email}\n`;
+        const seg = rd?.segments?.[si];
+        if (seg && si < day.stops.length - 1) {
+          text += `     🚗 Hasta la siguiente parada: ${seg.distance}`;
+          if (seg.duration !== '—') text += ` · ${seg.duration} de viaje`;
+          text += '\n';
+        }
+      });
+    }
+    text += '\n';
+  });
+  text += '⚠️ Este itinerario no es una reserva confirmada. Contactá a cada emprendimiento para coordinar.\n';
+  text += 'Generado con el Planificador de Turismo Rural Jujuy — turismoruraljujuy.com.ar';
+
+  // Intentar Web Share API (móvil / navegadores modernos)
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: it.name, text });
+      return;
+    } catch (err) {
+      // El usuario canceló el diálogo nativo — no mostrar error
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  // Fallback: copiar al portapapeles
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Itinerario copiado al portapapeles ✓', 'success', 3500);
+      return;
+    } catch (_) { /* continuar al fallback de texto */ }
+  }
+
+  // Fallback final: abrir en nueva pestaña como texto plano
+  openItineraryPrint();
+}
 
 
 // ═══════════════════════════════════════════════════════════
@@ -1380,6 +1676,31 @@ const routeRenderers = {};
 const routePolylines = [];
 /** Almacena segmentos de distancia por dayId para usar en exportar/compartir */
 const routeData = {};
+
+/**
+ * Ajusta la vista del mapa (fitBounds) para que todas las paradas con
+ * coordenadas del día especificado queden visibles.
+ * Con 1 sola parada hace panTo + zoom en lugar de fitBounds.
+ */
+function fitMapToDayStops(dayId) {
+  if (!mapInstance) return;
+  const it  = getActive();
+  const day = it?.days.find(d => d.id === dayId);
+  if (!day) return;
+
+  const stopsWithCoords = day.stops.filter(s => s.lat && s.lng);
+  if (stopsWithCoords.length === 0) return;
+
+  if (stopsWithCoords.length === 1) {
+    mapInstance.panTo({ lat: stopsWithCoords[0].lat, lng: stopsWithCoords[0].lng });
+    if (mapInstance.getZoom() < 12) mapInstance.setZoom(12);
+    return;
+  }
+
+  const bounds = new google.maps.LatLngBounds();
+  stopsWithCoords.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }));
+  mapInstance.fitBounds(bounds, { padding: 80 }); // 80px de padding visual
+}
 
 function drawActiveRoute() {
   if (!mapInstance) return;
@@ -1541,12 +1862,16 @@ function formatDuration(s) {
 // ─ Itinerary Title ─
 const titleEl = document.getElementById('itineraryTitle');
 
-titleEl.addEventListener('input', () => {
+// Debounce: esperar 350ms sin actividad antes de guardar el nombre
+// evita llamar a renameItinerary y saveState en cada keystroke
+const debouncedRename = debounce(() => {
   const it = getActive();
   if (!it) return;
   const name = titleEl.textContent.trim();
   if (name) { renameItinerary(it.id, name); refreshSwitcherName(); }
-});
+}, 350);
+
+titleEl.addEventListener('input', debouncedRename);
 
 titleEl.addEventListener('blur', () => {
   const it = getActive();
@@ -1560,7 +1885,15 @@ titleEl.addEventListener('keydown', e => {
 titleEl.addEventListener('paste', e => {
   e.preventDefault();
   const text = e.clipboardData.getData('text/plain').replace(/\n/g, ' ');
-  document.execCommand('insertText', false, text);
+  // Usar la Selection API moderna en lugar del obsoleto execCommand
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  sel.deleteFromDocument();
+  const range = sel.getRangeAt(0);
+  range.insertNode(document.createTextNode(text));
+  sel.collapseToEnd();
+  // Disparar input manualmente para que el listener de renaming lo reciba
+  titleEl.dispatchEvent(new Event('input', { bubbles: true }));
 });
 
 // ─ New Itinerary ─
@@ -1651,6 +1984,178 @@ plannerEl.addEventListener('click', e => {
     mobileToggle.setAttribute('aria-expanded', 'false');
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// DRAG & DROP — REORDENAR DÍAS Y PARADAS
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Función genérica de DnD HTML5 para un elemento con handle.
+ * @param {HTMLElement} el           - el elemento arrastrable
+ * @param {HTMLElement} handle       - el handle que inicia el drag
+ * @param {string}      dragClass    - clase CSS que marca el elemento mientras se arrastra
+ * @param {string}      overClass    - clase CSS del elemento destino mientras se sobrevuela
+ * @param {string}      itemSelector - selector CSS del grupo de items (para limpiar estados)
+ * @param {Function}    onDrop       - callback(draggedEl, targetEl) cuando se suelta
+ */
+function setupDnD(el, handle, dragClass, overClass, itemSelector, onDrop) {
+  // Sólo hacer el elemento draggable mientras el usuario mantiene el handle
+  handle.addEventListener('mousedown', () => { el.draggable = true; });
+  handle.addEventListener('mouseup',   () => { el.draggable = false; });
+  // Touch: no habilitamos draggable=true en touchstart para no bloquear el scroll
+
+  el.addEventListener('dragstart', e => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', ''); // requerido por Firefox
+    setTimeout(() => el.classList.add(dragClass), 0);
+  });
+
+  el.addEventListener('dragend', () => {
+    el.draggable = false;
+    el.classList.remove(dragClass);
+    document.querySelectorAll(`.${overClass}`).forEach(n => n.classList.remove(overClass));
+  });
+
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const dragging = document.querySelector(`${itemSelector}.${dragClass}`);
+    if (!dragging || dragging === el) return;
+    document.querySelectorAll(`${itemSelector}.${overClass}`)
+      .forEach(n => { if (n !== el) n.classList.remove(overClass); });
+    el.classList.add(overClass);
+  });
+
+  el.addEventListener('dragleave', e => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove(overClass);
+  });
+
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove(overClass);
+    const dragging = document.querySelector(`${itemSelector}.${dragClass}`);
+    if (dragging && dragging !== el) onDrop(dragging, el);
+  });
+}
+
+/**
+ * Activa DnD en un stop-item individual.
+ * Se llama desde buildStopEl para cada stop.
+ * La lista padre (stopsList) se resuelve en el momento del drop via closest().
+ */
+function enableStopDnD(stopEl, itineraryId, dayId) {
+  const handle = stopEl.querySelector('.stop-item__drag');
+  if (!handle) return;
+
+  setupDnD(stopEl, handle, 'dnd-dragging', 'dnd-over', '.stop-item', (dragged, target) => {
+    const it  = state.itineraries.find(i => i.id === itineraryId);
+    const day = it?.days.find(d => d.id === dayId);
+    if (!day) return;
+
+    const fromId  = dragged.dataset.stopId;
+    const toId    = target.dataset.stopId;
+    const fromIdx = day.stops.findIndex(s => s.id === fromId);
+    const toIdx   = day.stops.findIndex(s => s.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    // Actualizar estado
+    const [moved] = day.stops.splice(fromIdx, 1);
+    day.stops.splice(toIdx, 0, moved);
+    it.updatedAt = Date.now();
+    saveState();
+
+    // Actualizar DOM sin re-render — resolver la lista en tiempo de drop
+    const list = dragged.closest('.stops-list');
+    if (list) {
+      if (fromIdx < toIdx) {
+        list.insertBefore(dragged, target.nextSibling);
+      } else {
+        list.insertBefore(dragged, target);
+      }
+    }
+
+    // Redibujar ruta con el nuevo orden
+    if (mapInstance && dayId === state.activeDayId) setTimeout(drawActiveRoute, 100);
+  });
+}
+
+/**
+ * Activa DnD en un day-card individual.
+ * Se llama desde buildDayCard para cada día.
+ */
+function enableDayDnD(card, container, itId) {
+  const handle = card.querySelector('.day-card__drag');
+  if (!handle) return;
+
+  setupDnD(card, handle, 'dnd-dragging', 'dnd-over', '.day-card', (dragged, target) => {
+    const it = state.itineraries.find(i => i.id === itId);
+    if (!it) return;
+
+    const fromId  = dragged.dataset.dayId;
+    const toId    = target.dataset.dayId;
+    const fromIdx = it.days.findIndex(d => d.id === fromId);
+    const toIdx   = it.days.findIndex(d => d.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    // Actualizar estado
+    const [moved] = it.days.splice(fromIdx, 1);
+    it.days.splice(toIdx, 0, moved);
+    it.updatedAt = Date.now();
+    saveState();
+
+    // Actualizar DOM sin re-render
+    if (fromIdx < toIdx) {
+      container.insertBefore(dragged, target.nextSibling);
+    } else {
+      container.insertBefore(dragged, target);
+    }
+
+    // Refrescar números y colores de todos los day-cards visibles
+    refreshDayNumbers(it);
+    refreshActiveDayUI();
+    if (mapInstance && state.activeDayId) setTimeout(drawActiveRoute, 100);
+  });
+}
+
+/**
+ * Refresca sólo los números, fechas y colores de los day-card headers
+ * después de un reordenamiento, sin destruir ni reconstruir el DOM.
+ */
+function refreshDayNumbers(it) {
+  const cards = document.querySelectorAll('#daysList .day-card');
+  cards.forEach((card, newIdx) => {
+    const { num, date } = getDayLabel(newIdx, it);
+    const numEl  = card.querySelector('.day-card__number');
+    const dateEl = card.querySelector('.day-card__date');
+    if (numEl) numEl.textContent = num;
+
+    if (it.mode === 'dates' && it.startDate && date) {
+      if (dateEl) {
+        dateEl.textContent = date;
+      } else {
+        const label = card.querySelector('.day-card__label');
+        if (label) {
+          const span = document.createElement('span');
+          span.className = 'day-card__date';
+          span.textContent = date;
+          label.appendChild(span);
+        }
+      }
+    } else if (dateEl) {
+      dateEl.remove();
+    }
+
+    // Color del día cambia al cambiar de posición
+    const color = DAY_COLORS[newIdx % DAY_COLORS.length];
+    card.style.setProperty('--day-color', color);
+    const tag = card.querySelector('.day-card__active-tag');
+    if (tag && card.classList.contains('active-day')) tag.style.color = color;
+
+    // Actualizar aria-label del botón eliminar
+    const delBtn = card.querySelector('[data-action="del-day"]');
+    if (delBtn) delBtn.setAttribute('aria-label', `Eliminar ${num}`);
+  });
+}
 
 // ═══════════════════════════════════════════════════════════
 // INIT
