@@ -230,9 +230,11 @@ function loadState() {
 }
 
 function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+  // Excluir _marker (referencia circular de Google Maps) al serializar
+  const replacer = (key, value) => key === '_marker' ? undefined : value;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state, replacer)); } catch (_) {}
   // Notificar al sistema undo/redo que el estado cambió
-  undoStack.push(JSON.stringify(state));
+  undoStack.push(JSON.stringify(state, replacer));
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   redoStack.length = 0; // cualquier cambio limpia el redo
   refreshUndoRedoBtns();
