@@ -31,7 +31,6 @@ class I18nManager {
             this.translations = await response.json();
             this.currentLang = lang;
         } catch (error) {
-            // Fallback a español si hay error
             if (lang !== 'es') {
                 await this.loadTranslations('es');
             }
@@ -40,23 +39,14 @@ class I18nManager {
 
     async changeLanguage(lang) {
         if (lang === this.currentLang) return;
-        
-        // Añadir clase de animación
         document.body.classList.add('language-changing');
-        
         await this.loadTranslations(lang);
         this.saveLanguage(lang);
         this.applyTranslations();
-        
-        // Actualizar selector
         this.updateLanguageSelector();
-        
-        // Actualizar Ayni si existe
         if (window.ayniAssistant) {
             window.ayniAssistant.updateLanguage();
         }
-        
-        // Remover clase de animación
         setTimeout(() => {
             document.body.classList.remove('language-changing');
         }, 500);
@@ -69,20 +59,17 @@ class I18nManager {
 
         if (!selectorBtn || !dropdown) return;
 
-        // Toggle dropdown
         selectorBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             dropdown.classList.toggle('active');
             selectorBtn.classList.toggle('active');
         });
 
-        // Cerrar dropdown al hacer click fuera
         document.addEventListener('click', () => {
             dropdown.classList.remove('active');
             selectorBtn.classList.remove('active');
         });
 
-        // Opciones de idioma
         options.forEach(option => {
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -93,7 +80,6 @@ class I18nManager {
             });
         });
 
-        // Actualizar selector inicial
         this.updateLanguageSelector();
     }
 
@@ -116,34 +102,24 @@ class I18nManager {
     }
 
     applyTranslations() {
-        // Traducir elementos con data-i18n
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             const translation = this.getNestedTranslation(key);
-            if (translation) {
-                el.textContent = translation;
-            }
+            if (translation) el.textContent = translation;
         });
 
-        // Traducir elementos con data-i18n-html (permite HTML)
         document.querySelectorAll('[data-i18n-html]').forEach(el => {
             const key = el.getAttribute('data-i18n-html');
             const translation = this.getNestedTranslation(key);
-            if (translation) {
-                el.innerHTML = translation;
-            }
+            if (translation) el.innerHTML = translation;
         });
 
-        // Traducir placeholders
         document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
             const key = el.getAttribute('data-i18n-placeholder');
             const translation = this.getNestedTranslation(key);
-            if (translation) {
-                el.placeholder = translation;
-            }
+            if (translation) el.placeholder = translation;
         });
 
-        // Traducir opciones con prefijo numérico (data-i18n-option)
         document.querySelectorAll('[data-i18n-option]').forEach(el => {
             const key = el.getAttribute('data-i18n-option');
             const prefix = el.getAttribute('data-i18n-option-prefix');
@@ -157,7 +133,6 @@ class I18nManager {
     getNestedTranslation(key) {
         const keys = key.split('.');
         let value = this.translations;
-        
         for (const k of keys) {
             if (value && typeof value === 'object' && k in value) {
                 value = value[k];
@@ -165,7 +140,6 @@ class I18nManager {
                 return null;
             }
         }
-        
         return value;
     }
 
@@ -173,36 +147,23 @@ class I18nManager {
         return this.getNestedTranslation(key) || key;
     }
 
-    // Método para obtener las traducciones de Ayni
     getAyniTranslations() {
         return this.translations.ayni || {};
     }
 }
 
-// Instancia global del gestor de idiomas
 const i18n = new I18nManager();
 
 // ============================================
 // UTILIDADES DE SEGURIDAD
 // ============================================
 
-/**
- * Escapa caracteres HTML para prevenir XSS al insertar datos en el DOM.
- * @param {string} str - Texto que puede contener HTML o scripts
- * @returns {string} - Texto seguro para usar en innerHTML
- */
 function escapeHtml(str) {
     if (str == null || str === '') return '';
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(str).replace(/[&<>"']/g, (c) => map[c]);
 }
 
-/**
- * Valida que una URL sea segura para usar en href (solo http, https, mailto, tel).
- * @param {string} url - URL a validar
- * @param {string} fallback - Valor por defecto si la URL no es válida
- * @returns {string|null}
- */
 function sanitizeHrefUrl(url, fallback = null) {
     if (!url || typeof url !== 'string') return fallback;
     const trimmed = url.trim();
@@ -215,25 +176,19 @@ function sanitizeHrefUrl(url, fallback = null) {
     return fallback;
 }
 
-// Placeholder local para imágenes (evita peticiones externas)
-// SVG con comillas dobles para usar seguro en atributos onerror
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23DEB887%22%2F%3E%3C%2Fsvg%3E";
 
-// URL del CSV publicado
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5gGiVAH3mV0ItZZzhpIWCt7CXKbX6UqSpJy76teHK-o6hKeIYeu1p-I1NhFjNxvP0E/pub?gid=0&single=true&output=csv';
 
-// Variables globales
 let emprendimientos = [];
 let emprendimientosFiltrados = [];
 let map = null;
 let markersLayer = null;
 let currentView = 'grid';
 
-// Variables de paginación
 let currentPage = 1;
 let itemsPerPage = 12;
 
-// Elementos del DOM
 const searchInput = document.getElementById('searchInput');
 const regionFilter = document.getElementById('regionFilter');
 const rubroFilter = document.getElementById('rubroFilter');
@@ -245,7 +200,6 @@ const gridViewBtn = document.getElementById('gridViewBtn');
 const mapViewBtn = document.getElementById('mapViewBtn');
 const mapView = document.getElementById('mapView');
 
-// Elementos de paginación
 const paginationControls = document.getElementById('paginationControls');
 const itemsPerPageSelect = document.getElementById('itemsPerPage');
 const firstPageBtn = document.getElementById('firstPage');
@@ -255,7 +209,6 @@ const lastPageBtn = document.getElementById('lastPage');
 const pageInfo = document.getElementById('pageInfo');
 const rangeInfo = document.getElementById('rangeInfo');
 
-// Elementos de paginación inferior
 const paginationControlsBottom = document.getElementById('paginationControlsBottom');
 const firstPageBtnBottom = document.getElementById('firstPageBottom');
 const prevPageBtnBottom = document.getElementById('prevPageBottom');
@@ -264,7 +217,10 @@ const lastPageBtnBottom = document.getElementById('lastPageBottom');
 const pageInfoBottom = document.getElementById('pageInfoBottom');
 const rangeInfoBottom = document.getElementById('rangeInfoBottom');
 
-// Parser de CSV robusto que maneja saltos de línea dentro de comillas
+// ============================================
+// PARSER CSV
+// ============================================
+
 function parseCSV(text) {
     const rows = [];
     let currentRow = [];
@@ -277,22 +233,16 @@ function parseCSV(text) {
         
         if (char === '"') {
             if (insideQuotes && nextChar === '"') {
-                // Comilla doble escapada ""
                 currentField += '"';
                 i++;
             } else {
-                // Toggle estado de comillas
                 insideQuotes = !insideQuotes;
             }
         } else if (char === ',' && !insideQuotes) {
-            // Fin de campo
             currentRow.push(currentField);
             currentField = '';
         } else if ((char === '\n' || char === '\r') && !insideQuotes) {
-            // Fin de fila
-            if (char === '\r' && nextChar === '\n') {
-                i++; // Saltar \n en \r\n
-            }
+            if (char === '\r' && nextChar === '\n') i++;
             if (currentField || currentRow.length > 0) {
                 currentRow.push(currentField);
                 if (currentRow.some(field => field.trim())) {
@@ -306,7 +256,6 @@ function parseCSV(text) {
         }
     }
     
-    // Agregar última fila si existe
     if (currentField || currentRow.length > 0) {
         currentRow.push(currentField);
         if (currentRow.some(field => field.trim())) {
@@ -317,47 +266,35 @@ function parseCSV(text) {
     return rows;
 }
 
-// Headers mínimos requeridos en el CSV
 const CSV_REQUIRED_HEADERS = ['Emprendimiento'];
 
-// Función para cargar y parsear el CSV
+// ============================================
+// CARGA DE DATOS
+// ============================================
+
 async function cargarDatos() {
     try {
         if (resultsCount) resultsCount.textContent = i18n.t('views.loading');
 
         const response = await fetch(CSV_URL);
-        if (!response.ok) {
-            throw new Error(`Error de red: ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Error de red: ${response.status} ${response.statusText}`);
         const csvText = await response.text();
-
         const rows = parseCSV(csvText);
 
-        if (rows.length < 2) {
-            throw new Error('El CSV está vacío o no tiene filas de datos');
-        }
+        if (rows.length < 2) throw new Error('El CSV está vacío o no tiene filas de datos');
 
         const headers = rows[0].map(h => (h || '').trim());
         const missingHeaders = CSV_REQUIRED_HEADERS.filter(h => !headers.includes(h));
-        if (missingHeaders.length > 0) {
-            throw new Error(`Estructura del CSV inválida. Faltan columnas: ${missingHeaders.join(', ')}`);
-        }
+        if (missingHeaders.length > 0) throw new Error(`Faltan columnas: ${missingHeaders.join(', ')}`);
 
-        // Convertir filas a objetos
         const datos = [];
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             const obj = {};
-
             headers.forEach((header, index) => {
                 obj[header] = row[index] ? row[index].trim() : '';
             });
-
-            // Solo agregar si tiene nombre de emprendimiento válido (más de 3 caracteres)
-            // Y que tenga al menos Región O Rubro
-            if (obj.Emprendimiento &&
-                obj.Emprendimiento.length > 3 &&
-                (obj.Región || obj.Rubro)) {
+            if (obj.Emprendimiento && obj.Emprendimiento.length > 3 && (obj.Región || obj.Rubro)) {
                 datos.push(obj);
             }
         }
@@ -374,7 +311,10 @@ async function cargarDatos() {
     }
 }
 
-// Función para llenar los filtros con opciones únicas
+// ============================================
+// FILTROS
+// ============================================
+
 function llenarFiltros() {
     const regiones = [...new Set(emprendimientos.map(e => e.Región))].filter(r => r).sort();
     const rubros = [...new Set(emprendimientos.map(e => e.Rubro))].filter(r => r).sort();
@@ -393,36 +333,22 @@ function llenarFiltros() {
         rubroFilter.appendChild(option);
     });
 
-    // Llenar comunidades inicialmente con todas las opciones
     actualizarFiltroComunidades();
 }
 
-// Función para actualizar el filtro de comunidades según la región seleccionada
 function actualizarFiltroComunidades() {
     const regionSeleccionada = regionFilter.value;
     const rubroSeleccionado = rubroFilter.value;
     
-    // Filtrar emprendimientos según región y rubro seleccionados
     let emprendimientosFiltradosTemp = emprendimientos;
+    if (regionSeleccionada) emprendimientosFiltradosTemp = emprendimientosFiltradosTemp.filter(e => e.Región === regionSeleccionada);
+    if (rubroSeleccionado) emprendimientosFiltradosTemp = emprendimientosFiltradosTemp.filter(e => e.Rubro === rubroSeleccionado);
     
-    if (regionSeleccionada) {
-        emprendimientosFiltradosTemp = emprendimientosFiltradosTemp.filter(e => e.Región === regionSeleccionada);
-    }
-    
-    if (rubroSeleccionado) {
-        emprendimientosFiltradosTemp = emprendimientosFiltradosTemp.filter(e => e.Rubro === rubroSeleccionado);
-    }
-    
-    // Obtener comunidades únicas de los emprendimientos filtrados
     const comunidades = [...new Set(emprendimientosFiltradosTemp.map(e => e['Comunidad / Pueblo']))].filter(r => r).sort();
-    
-    // Guardar el valor actual del filtro de comunidades
     const comunidadActual = comunidadFilter.value;
     
-    // Limpiar el select de comunidades (excepto la primera opción)
     comunidadFilter.innerHTML = `<option value="">${i18n.t('filters.allCommunities')}</option>`;
     
-    // Llenar con las nuevas opciones
     comunidades.forEach(comunidad => {
         const option = document.createElement('option');
         option.value = comunidad;
@@ -430,7 +356,6 @@ function actualizarFiltroComunidades() {
         comunidadFilter.appendChild(option);
     });
     
-    // Restaurar el valor si todavía existe en las nuevas opciones
     if (comunidades.includes(comunidadActual)) {
         comunidadFilter.value = comunidadActual;
     } else {
@@ -438,7 +363,10 @@ function actualizarFiltroComunidades() {
     }
 }
 
-// Función para renderizar los emprendimientos
+// ============================================
+// RENDERIZADO
+// ============================================
+
 function renderizarEmprendimientos() {
     emprendimientosGrid.innerHTML = '';
     
@@ -448,15 +376,12 @@ function renderizarEmprendimientos() {
         return;
     }
     
-    // Determinar emprendimientos a mostrar según paginación
     let emprendimientosAMostrar;
     
     if (itemsPerPage === 'all') {
-        // Mostrar todos
         emprendimientosAMostrar = emprendimientosFiltrados;
         ocultarPaginacion();
     } else {
-        // Mostrar según paginación
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
         emprendimientosAMostrar = emprendimientosFiltrados.slice(startIndex, endIndex);
@@ -470,16 +395,14 @@ function renderizarEmprendimientos() {
 }
 
 // ============================================
-// FUNCIONES DE PAGINACIÓN
+// PAGINACIÓN
 // ============================================
 
-// Calcular total de páginas
 function calcularTotalPaginas() {
     if (itemsPerPage === 'all') return 1;
     return Math.ceil(emprendimientosFiltrados.length / itemsPerPage);
 }
 
-// Actualizar controles de paginación
 function actualizarPaginacion() {
     const totalPages = calcularTotalPaginas();
     const startIndex = (currentPage - 1) * itemsPerPage + 1;
@@ -505,113 +428,69 @@ function actualizarPaginacion() {
     [nextPageBtn, lastPageBtn, nextPageBtnBottom, lastPageBtnBottom].forEach(el => { if (el) el.disabled = !canGoNext; });
 }
 
-// Ocultar paginación (solo los botones de navegación, no el selector)
 function ocultarPaginacion() {
-    if (paginationControls) {
-        paginationControls.style.display = 'flex'; // Mantener visible el control
-    }
+    if (paginationControls) paginationControls.style.display = 'flex';
     
-    // Ocultar solo los botones de navegación y contadores superiores
     const centerControls = paginationControls?.querySelector('.pagination-controls__center');
     const rightControls = paginationControls?.querySelector('.pagination-controls__right');
-    
     if (centerControls) centerControls.style.display = 'none';
     if (rightControls) rightControls.style.display = 'none';
-    
-    // Ocultar completamente los controles inferiores cuando se selecciona "Todos"
-    if (paginationControlsBottom) {
-        paginationControlsBottom.style.display = 'none';
-    }
+    if (paginationControlsBottom) paginationControlsBottom.style.display = 'none';
 }
 
-// Ir a una página específica
 function irAPagina(numeroPagina) {
     const totalPages = calcularTotalPaginas();
-    
-    if (numeroPagina < 1) {
-        currentPage = 1;
-    } else if (numeroPagina > totalPages) {
-        currentPage = totalPages;
-    } else {
-        currentPage = numeroPagina;
-    }
+    if (numeroPagina < 1) currentPage = 1;
+    else if (numeroPagina > totalPages) currentPage = totalPages;
+    else currentPage = numeroPagina;
     
     renderizarEmprendimientos();
     
-    // Scroll suave hacia arriba
     const emprendimientosSection = document.getElementById('emprendimientos');
     if (emprendimientosSection) {
         emprendimientosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
-// Cambiar cantidad de elementos por página
 function cambiarItemsPorPagina(valor) {
     if (valor === 'all') {
         itemsPerPage = 'all';
     } else {
         itemsPerPage = parseInt(valor);
     }
-    currentPage = 1; // Resetear a primera página
+    currentPage = 1;
     renderizarEmprendimientos();
 }
 
-// Función para formatear URL de Facebook
+// ============================================
+// UTILIDADES
+// ============================================
+
 function formatearFacebookURL(facebook) {
     if (!facebook) return null;
-    
     const fb = facebook.trim();
-    
-    // Si ya es una URL completa, devolverla
-    if (fb.startsWith('http://') || fb.startsWith('https://')) {
-        return fb;
-    }
-    
-    // Si es solo el nombre de usuario (sin espacios), agregar www.facebook.com
-    if (!fb.includes(' ') && !fb.includes('/')) {
-        return `https://www.facebook.com/${fb}`;
-    }
-    
-    // Si tiene espacios, buscar en Facebook
+    if (fb.startsWith('http://') || fb.startsWith('https://')) return fb;
+    if (!fb.includes(' ') && !fb.includes('/')) return `https://www.facebook.com/${fb}`;
     return `https://www.facebook.com/search/top?q=${encodeURIComponent(fb)}`;
 }
 
-// Función para convertir URL de Google Drive a enlace directo
 function convertirGoogleDriveURL(url) {
-    if (!url || !url.includes('drive.google.com')) {
-        return url;
-    }
+    if (!url || !url.includes('drive.google.com')) return url;
     
-    // Extraer el ID del archivo
     let fileId = null;
-    
-    // Formato: /file/d/ID/
     let match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
-    if (match) {
-        fileId = match[1];
-    }
+    if (match) fileId = match[1];
+    if (!fileId) { match = url.match(/\/d\/([a-zA-Z0-9-_]+)/); if (match) fileId = match[1]; }
+    if (!fileId) { match = url.match(/[?&]id=([a-zA-Z0-9-_]+)/); if (match) fileId = match[1]; }
     
-    // Formato: /d/ID
-    if (!fileId) {
-        match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-        if (match) fileId = match[1];
-    }
-    
-    // Formato: id=ID
-    if (!fileId) {
-        match = url.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-        if (match) fileId = match[1];
-    }
-    
-    if (fileId) {
-        // Usar thumbnail para mejor compatibilidad
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
-    }
-    
+    if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
     return url;
 }
 
-// Función para crear una card de emprendimiento
+// ============================================
+// CARDS
+// ============================================
+
 function crearCard(emp) {
     const card = document.createElement('div');
     card.className = 'emprendimiento-card';
@@ -622,13 +501,10 @@ function crearCard(emp) {
     const email = emp['Correo electrónico'];
     const comunidad = emp['Comunidad / Pueblo'];
     
-    // Usar imagen real si existe y es URL válida, sino placeholder local
     let imagenUrl = PLACEHOLDER_IMAGE;
     if (emp.Imagen && emp.Imagen.trim()) {
         const url = convertirGoogleDriveURL(emp.Imagen.trim());
-        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-            imagenUrl = url;
-        }
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) imagenUrl = url;
     }
     
     const nombre = escapeHtml(emp.Emprendimiento || '');
@@ -652,89 +528,42 @@ function crearCard(emp) {
         </div>
     </div>
     <div class="emprendimiento-card__content">
-            <div class="emprendimiento-card__header">
-                <h3 class="emprendimiento-card__title">${nombre}</h3>
-                <div class="emprendimiento-card__tags">
-                    ${emp.Región ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--region">${escapeHtml(emp.Región)}</span>` : ''}
-                    ${emp.Rubro ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--rubro">${escapeHtml(emp.Rubro)}</span>` : ''}
-                </div>
-            </div>
-            
-            ${comunidad ? `<p class="emprendimiento-card__location">${escapeHtml(comunidad)}</p>` : ''}
-            
-            ${emp.Descripción ? `<p class="emprendimiento-card__description">${escapeHtml(emp.Descripción)}</p>` : ''}
-            
-            <div class="emprendimiento-card__footer">
-                <div class="emprendimiento-card__contact">
-                    ${telefono ? `
-                        <a 
-                            href="https://wa.me/${telefono}" 
-                            target="_blank"
-                            class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--whatsapp"
-                            onclick="event.stopPropagation()"
-                            title="WhatsApp"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                            </svg>
-                        </a>
-                    ` : ''}
-                    
-                    ${instagram ? `
-                        <a 
-                            href="https://instagram.com/${instagram}" 
-                            target="_blank"
-                            class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--instagram"
-                            onclick="event.stopPropagation()"
-                            title="Instagram"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                            </svg>
-                        </a>
-                    ` : ''}
-                    
-                    ${facebook ? `
-                        <a 
-                            href="${formatearFacebookURL(facebook)}" 
-                            target="_blank"
-                            class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--facebook"
-                            onclick="event.stopPropagation()"
-                            title="Facebook"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                            </svg>
-                        </a>
-                    ` : ''}
-                    
-                    ${email ? `
-                        <a 
-                            href="mailto:${escapeHtml(email)}" 
-                            class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--email"
-                            onclick="event.stopPropagation()"
-                            title="Email"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                            </svg>
-                        </a>
-                    ` : ''}
-                </div>
+        <div class="emprendimiento-card__header">
+            <h3 class="emprendimiento-card__title">${nombre}</h3>
+            <div class="emprendimiento-card__tags">
+                ${emp.Región ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--region">${escapeHtml(emp.Región)}</span>` : ''}
+                ${emp.Rubro ? `<span class="emprendimiento-card__tag emprendimiento-card__tag--rubro">${escapeHtml(emp.Rubro)}</span>` : ''}
             </div>
         </div>
+        ${comunidad ? `<p class="emprendimiento-card__location">${escapeHtml(comunidad)}</p>` : ''}
+        ${emp.Descripción ? `<p class="emprendimiento-card__description">${escapeHtml(emp.Descripción)}</p>` : ''}
+        <div class="emprendimiento-card__footer">
+            <div class="emprendimiento-card__contact">
+                ${telefono ? `
+                    <a href="https://wa.me/${telefono}" target="_blank" class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--whatsapp" onclick="event.stopPropagation()" title="WhatsApp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </a>` : ''}
+                ${instagram ? `
+                    <a href="https://instagram.com/${instagram}" target="_blank" class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--instagram" onclick="event.stopPropagation()" title="Instagram">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>` : ''}
+                ${facebook ? `
+                    <a href="${formatearFacebookURL(facebook)}" target="_blank" class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--facebook" onclick="event.stopPropagation()" title="Facebook">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </a>` : ''}
+                ${email ? `
+                    <a href="mailto:${escapeHtml(email)}" class="emprendimiento-card__contact-btn emprendimiento-card__contact-btn--email" onclick="event.stopPropagation()" title="Email">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    </a>` : ''}
+            </div>
+        </div>
+    </div>
     `;
     
-    // Agregar evento click para abrir modal
-    card.addEventListener('click', () => {
-        abrirModal(emp);
-    });
-    
+    card.addEventListener('click', () => abrirModal(emp));
     return card;
 }
 
-// Función para mostrar estado vacío
 function mostrarEstadoVacio() {
     emprendimientosGrid.innerHTML = `
         <div class="empty-state">
@@ -745,7 +574,6 @@ function mostrarEstadoVacio() {
     `;
 }
 
-// Función para mostrar error
 function mostrarError() {
     emprendimientosGrid.innerHTML = `
         <div class="empty-state">
@@ -757,11 +585,9 @@ function mostrarError() {
     resultsCount.textContent = i18n.t('cards.error');
 }
 
-// Función para actualizar el contador
 function actualizarContador() {
     const total = emprendimientos.length;
     const mostrados = emprendimientosFiltrados.length;
-    
     const countText = i18n.t('cards.resultsCount');
     
     if (mostrados === total) {
@@ -771,7 +597,6 @@ function actualizarContador() {
     }
 }
 
-// Función para aplicar filtros
 function aplicarFiltros() {
     const searchTerm = searchInput.value.toLowerCase();
     const regionSeleccionada = regionFilter.value;
@@ -779,33 +604,22 @@ function aplicarFiltros() {
     const comunidadSeleccionada = comunidadFilter.value;
     
     emprendimientosFiltrados = emprendimientos.filter(emp => {
-        // Filtro de búsqueda
         const matchSearch = searchTerm === '' || 
             emp.Emprendimiento.toLowerCase().includes(searchTerm) ||
             (emp.Descripción && emp.Descripción.toLowerCase().includes(searchTerm)) ||
             (emp['Comunidad / Pueblo'] && emp['Comunidad / Pueblo'].toLowerCase().includes(searchTerm));
-        
-        // Filtro de región
         const matchRegion = regionSeleccionada === '' || emp.Región === regionSeleccionada;
-        
-        // Filtro de rubro
         const matchRubro = rubroSeleccionado === '' || emp.Rubro === rubroSeleccionado;
-        
-        // Filtro de comunidad
         const matchComunidad = comunidadSeleccionada === '' || emp['Comunidad / Pueblo'] === comunidadSeleccionada;
-        
         return matchSearch && matchRegion && matchRubro && matchComunidad;
     });
     
-    // Resetear a primera página cuando se aplican filtros
     currentPage = 1;
-    
     renderizarEmprendimientos();
     actualizarContador();
     actualizarMarcadores();
 }
 
-// Función para limpiar filtros
 function limpiarFiltros() {
     searchInput.value = '';
     regionFilter.value = '';
@@ -815,26 +629,20 @@ function limpiarFiltros() {
     aplicarFiltros();
 }
 
-// Event Listeners
 searchInput.addEventListener('input', aplicarFiltros);
-regionFilter.addEventListener('change', () => {
-    actualizarFiltroComunidades();
-    aplicarFiltros();
-});
-rubroFilter.addEventListener('change', () => {
-    actualizarFiltroComunidades();
-    aplicarFiltros();
-});
+regionFilter.addEventListener('change', () => { actualizarFiltroComunidades(); aplicarFiltros(); });
+rubroFilter.addEventListener('change', () => { actualizarFiltroComunidades(); aplicarFiltros(); });
 comunidadFilter.addEventListener('change', aplicarFiltros);
 clearFiltersBtn.addEventListener('click', limpiarFiltros);
 
-// Modal
+// ============================================
+// MODAL
+// ============================================
+
 const modal = document.getElementById('modalEmprendimiento');
 const modalClose = document.getElementById('modalClose');
 const modalContent = document.getElementById('modalContent');
 let currentSlide = 0;
-
-// Abrir modal
 let lastFocusedElement = null;
 
 function abrirModal(emprendimiento) {
@@ -844,20 +652,15 @@ function abrirModal(emprendimiento) {
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     
-    // Crear contenido del modal
     const telefono = emprendimiento['Teléfono( sin guiones ni espacios: 5493884123456)'];
     const instagram = emprendimiento['Instagram (solo el usuario, sin @)'];
     const facebook = emprendimiento['Facebook (solo el nombre de usuario)'];
     const email = emprendimiento['Correo electrónico'];
-    const web = emprendimiento['Web'];
     const comunidad = emprendimiento['Comunidad / Pueblo'];
     const infoAtencion = emprendimiento['Info / Atención / Condiciones de reserva'];
-    
-    // Obtener coordenadas para Google Maps
     const ubicacion = emprendimiento['Ubicación (formato: -23.5772, -65.3969 latitud,longitud)'];
     const coords = parsearCoordenadas(ubicacion);
     
-    // Recopilar todas las imágenes disponibles (solo URLs http/https válidas)
     const imagenes = [
         emprendimiento.Imagen,
         emprendimiento.Imagen2,
@@ -868,10 +671,7 @@ function abrirModal(emprendimiento) {
         .map(img => convertirGoogleDriveURL(img.trim()))
         .filter(url => url && (url.startsWith('http://') || url.startsWith('https://')));
     
-    // Si no hay imágenes, usar placeholder local
-    if (imagenes.length === 0) {
-        imagenes.push(PLACEHOLDER_IMAGE);
-    }
+    if (imagenes.length === 0) imagenes.push(PLACEHOLDER_IMAGE);
     
     const webUrl = sanitizeHrefUrl(emprendimiento.Web);
     const nombreModal = escapeHtml(emprendimiento.Emprendimiento || '');
@@ -882,43 +682,27 @@ function abrirModal(emprendimiento) {
     const infoModal = escapeHtml(emprendimiento['Info / Atención / Condiciones de reserva'] || '');
     
     modalContent.innerHTML = `
-        <!-- Galería de imágenes -->
         <div class="modal__gallery">
             <div class="modal__gallery-track" id="galleryTrack">
                 ${imagenes.map(img => {
                     const safeImg = (img.startsWith('data:')) ? img : escapeHtml(img);
-                    return `<img 
-                        src="${safeImg}" 
-                        alt="${nombreModal}"
-                        class="modal__gallery-image"
-                        onerror="this.src='${PLACEHOLDER_IMAGE.replace(/'/g, "\\'")}'"
-                    >`;
+                    return `<img src="${safeImg}" alt="${nombreModal}" class="modal__gallery-image" onerror="this.src='${PLACEHOLDER_IMAGE.replace(/'/g, "\\'")}'">`;
                 }).join('')}
             </div>
-            
             ${imagenes.length > 1 ? `
                 <div class="modal__gallery-nav">
                     <button class="modal__gallery-btn" id="prevBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="15 18 9 12 15 6"></polyline>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     </button>
                     <button class="modal__gallery-btn" id="nextBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </div>
-                
                 <div class="modal__gallery-dots">
-                    ${imagenes.map((_, index) => `
-                        <button class="modal__gallery-dot ${index === 0 ? 'active' : ''}" data-slide="${index}"></button>
-                    `).join('')}
+                    ${imagenes.map((_, index) => `<button class="modal__gallery-dot ${index === 0 ? 'active' : ''}" data-slide="${index}"></button>`).join('')}
                 </div>
             ` : ''}
         </div>
-        
-        <!-- Información -->
         <div class="modal__info">
             <div class="modal__header">
                 <h2 id="modalTitle" class="modal__title">${nombreModal}</h2>
@@ -928,95 +712,57 @@ function abrirModal(emprendimiento) {
                 </div>
                 ${comunidad ? `<p class="modal__location">${comunidadModal}</p>` : ''}
             </div>
-            
             ${emprendimiento.Descripción ? `
                 <div class="modal__section">
                     <h3 class="modal__section-title">${escapeHtml(i18n.t('modal.description'))}</h3>
                     <p class="modal__section-content">${descripcionModal}</p>
                 </div>
             ` : ''}
-
             ${infoAtencion ? `
                 <div class="modal__section">
                     <h3 class="modal__section-title">${escapeHtml(i18n.t('modal.infoConditions'))}</h3>
                     <p class="modal__section-content">${infoModal}</p>
                 </div>
             ` : ''}
-            
-            <!-- Botones de contacto -->
             <div class="modal__contacts">
                 ${telefono ? `
                     <a href="https://wa.me/${telefono}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--whatsapp" title="WhatsApp">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                         <span>WhatsApp</span>
-                    </a>
-                ` : ''}
-                
+                    </a>` : ''}
                 ${instagram ? `
                     <a href="https://instagram.com/${instagram}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--instagram" title="Instagram">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                         <span>Instagram</span>
-                    </a>
-                ` : ''}
-                
+                    </a>` : ''}
                 ${facebook ? `
                     <a href="${escapeHtml(formatearFacebookURL(facebook) || '')}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--facebook" title="Facebook">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                         <span>Facebook</span>
-                    </a>
-                ` : ''}
-                
+                    </a>` : ''}
                 ${email ? `
                     <a href="mailto:${escapeHtml(email)}" class="modal__contact-btn modal__contact-btn--email" title="Email">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="4" width="20" height="16" rx="2"/>
-                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                         <span>Email</span>
-                    </a>
-                ` : ''}
-                
+                    </a>` : ''}
                 ${webUrl ? `
                     <a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--web" title="${escapeHtml(i18n.t('modal.website'))}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="2" y1="12" x2="22" y2="12"/>
-                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                         <span>${i18n.t('modal.website')}</span>
-                    </a>
-                ` : ''}
-
+                    </a>` : ''}
                 ${coords ? `
                     <a href="https://www.google.com/maps/search/?api=1&query=${coords[0]},${coords[1]}" target="_blank" rel="noopener noreferrer" class="modal__contact-btn modal__contact-btn--maps" title="${escapeHtml(i18n.t('modal.howToGet'))}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0c-4.198 0-8 3.403-8 7.602 0 4.198 3.469 9.21 8 16.398 4.531-7.188 8-12.2 8-16.398 0-4.199-3.801-7.602-8-7.602zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-4.198 0-8 3.403-8 7.602 0 4.198 3.469 9.21 8 16.398 4.531-7.188 8-12.2 8-16.398 0-4.199-3.801-7.602-8-7.602zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>
                         <span>${i18n.t('modal.howToGet')}</span>
-                    </a>
-                ` : ''}
+                    </a>` : ''}
             </div>
         </div>
     `;
     
-    // Configurar navegación de galería si hay múltiples imágenes
-    if (imagenes.length > 1) {
-        setupGalleryNavigation(imagenes.length);
-    }
-
-    // Enfocar el botón de cerrar para accesibilidad (permite navegar con teclado)
-    setTimeout(() => {
-        if (modalClose) modalClose.focus();
-    }, 100);
+    if (imagenes.length > 1) setupGalleryNavigation(imagenes.length);
+    setTimeout(() => { if (modalClose) modalClose.focus(); }, 100);
 }
 
-// Configurar navegación de galería
 function setupGalleryNavigation(totalImages) {
     const track = document.getElementById('galleryTrack');
     const prevBtn = document.getElementById('prevBtn');
@@ -1025,116 +771,54 @@ function setupGalleryNavigation(totalImages) {
     
     function updateGallery() {
         track.style.transform = `translateX(-${currentSlide * 100}%)`;
-        
-        // Actualizar dots
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentSlide);
-        });
-        
-        // Actualizar botones
+        dots.forEach((dot, index) => dot.classList.toggle('active', index === currentSlide));
         prevBtn.disabled = currentSlide === 0;
         nextBtn.disabled = currentSlide === totalImages - 1;
     }
     
-    prevBtn.addEventListener('click', () => {
-        if (currentSlide > 0) {
-            currentSlide--;
-            updateGallery();
-        }
-    });
-    
-    nextBtn.addEventListener('click', () => {
-        if (currentSlide < totalImages - 1) {
-            currentSlide++;
-            updateGallery();
-        }
-    });
-    
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            currentSlide = index;
-            updateGallery();
-        });
-    });
+    prevBtn.addEventListener('click', () => { if (currentSlide > 0) { currentSlide--; updateGallery(); } });
+    nextBtn.addEventListener('click', () => { if (currentSlide < totalImages - 1) { currentSlide++; updateGallery(); } });
+    dots.forEach((dot, index) => { dot.addEventListener('click', () => { currentSlide = index; updateGallery(); }); });
 }
 
-// Cerrar modal
 function cerrarModal() {
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
-    if (lastFocusedElement && lastFocusedElement.focus) {
-        lastFocusedElement.focus();
-    }
+    if (lastFocusedElement && lastFocusedElement.focus) lastFocusedElement.focus();
 }
 
 modalClose.addEventListener('click', cerrarModal);
 modal.querySelector('.modal__overlay').addEventListener('click', cerrarModal);
-
-// Cerrar con ESC
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) {
-        cerrarModal();
-    }
+    if (e.key === 'Escape' && modal.classList.contains('active')) cerrarModal();
 });
 
-// cargarDatos() se llama desde DOMContentLoaded después de inicializar i18n
-
 // ============================================
-// FUNCIONES DEL MAPA INTERACTIVO
+// MAPA INTERACTIVO
 // ============================================
 
-// Función para parsear coordenadas desde el campo "Ubicación"
 function parsearCoordenadas(ubicacion) {
     if (!ubicacion || typeof ubicacion !== 'string') return null;
-    
-    // El formato es: "-23.xxx, -65.xxx"
     const coords = ubicacion.split(',').map(c => c.trim());
-    
     if (coords.length === 2) {
         const lat = parseFloat(coords[0]);
         const lng = parseFloat(coords[1]);
-        
-        if (!isNaN(lat) && !isNaN(lng)) {
-            return [lat, lng];
-        }
+        if (!isNaN(lat) && !isNaN(lng)) return [lat, lng];
     }
-    
     return null;
 }
 
-// Inicializar el mapa de Leaflet
 function inicializarMapa() {
-    // CRÍTICO: Establecer altura ANTES de crear el mapa
     const mapContainer = document.getElementById('map');
     mapContainer.style.height = '600px';
     mapContainer.style.width = '100%';
     
-    // Crear el mapa centrado en Jujuy
-    map = L.map('map', {
-        center: [-23.8, -65.5],
-        zoom: 9,
-        minZoom: 7,
-        maxZoom: 16,
-        zoomControl: true,
-        scrollWheelZoom: true
-    });
+    map = L.map('map', { center: [-23.8, -65.5], zoom: 9, minZoom: 7, maxZoom: 16, zoomControl: true, scrollWheelZoom: true });
     
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri', maxZoom: 16 }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB', maxZoom: 16, subdomains: 'abcd' }).addTo(map);
     
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri',
-    maxZoom: 16
-}).addTo(map);
-
-// Capa de etiquetas encima
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-    attribution: '© CartoDB',
-    maxZoom: 16,
-    subdomains: 'abcd'
-}).addTo(map);
-    
-    
-    // Crear capa de marcadores con clustering
     markersLayer = L.markerClusterGroup({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
@@ -1142,97 +826,52 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{
         zoomToBoundsOnClick: true,
         iconCreateFunction: function(cluster) {
             const count = cluster.getChildCount();
-            let size = 'small';
-            
-            if (count >= 10) size = 'large';
-            else if (count >= 5) size = 'medium';
-            
-            return L.divIcon({
-                html: `<div><span>${count}</span></div>`,
-                className: `marker-cluster marker-cluster-${size}`,
-                iconSize: L.point(40, 40)
-            });
+            let size = count >= 10 ? 'large' : count >= 5 ? 'medium' : 'small';
+            return L.divIcon({ html: `<div><span>${count}</span></div>`, className: `marker-cluster marker-cluster-${size}`, iconSize: L.point(40, 40) });
         }
     });
     
     map.addLayer(markersLayer);
-    
-    
-    // Cargar marcadores iniciales
     actualizarMarcadores();
-    
 }
 
-// Función para obtener el nombre del archivo de icono según rubro y región
 function obtenerIconoPorRubroYRegion(rubro, region) {
-    // Normalizar texto para comparación
     const rubroLower = rubro ? rubro.toLowerCase() : '';
     const regionLower = region ? region.toLowerCase() : '';
     
-    // Determinar el tipo de rubro
-    let tipoRubro = 'experiencia'; // Por defecto
+    let tipoRubro = 'experiencia';
+    if (rubroLower.includes('alojamiento') || rubroLower.includes('hospedaje')) tipoRubro = 'alojamiento';
+    else if (rubroLower.includes('artesanía') || rubroLower.includes('artesano')) tipoRubro = 'artesania';
+    else if (rubroLower.includes('caballo') || rubroLower.includes('paseo')) tipoRubro = 'caballo';
+    else if (rubroLower.includes('gastronom') || rubroLower.includes('comida')) tipoRubro = 'gastronomia';
+    else if (rubroLower.includes('guía') || rubroLower.includes('guia')) tipoRubro = 'guia';
+    else if (rubroLower.includes('experiencia')) tipoRubro = 'experiencia';
     
-    if (rubroLower.includes('alojamiento') || rubroLower.includes('hospedaje')) {
-        tipoRubro = 'alojamiento';
-    } else if (rubroLower.includes('artesanía') || rubroLower.includes('artesano')) {
-        tipoRubro = 'artesania';
-    } else if (rubroLower.includes('caballo') || rubroLower.includes('paseo')) {
-        tipoRubro = 'caballo';
-    } else if (rubroLower.includes('gastronom') || rubroLower.includes('comida')) {
-        tipoRubro = 'gastronomia';
-    } else if (rubroLower.includes('guía') || rubroLower.includes('guia')) {
-        tipoRubro = 'guia';
-    } else if (rubroLower.includes('experiencia')) {
-        tipoRubro = 'experiencia';
-    }
-    
-    // Determinar el color según la región
-    let colorRegion = 'bordo'; // Por defecto Quebrada
-    
-    if (regionLower.includes('puna')) {
-        colorRegion = 'amarillo';
-    } else if (regionLower.includes('yungas')) {
-        colorRegion = 'verde';
-    } else if (regionLower.includes('quebrada')) {
-        colorRegion = 'bordo';
-    }
+    let colorRegion = 'bordo';
+    if (regionLower.includes('puna')) colorRegion = 'amarillo';
+    else if (regionLower.includes('yungas')) colorRegion = 'verde';
+    else if (regionLower.includes('quebrada')) colorRegion = 'bordo';
     
     return `./assets/${tipoRubro}-${colorRegion}.png`;
 }
 
-// Crear icono personalizado para marcadores
 function crearIconoPersonalizado(rubro, region) {
-    const iconUrl = obtenerIconoPorRubroYRegion(rubro, region);
-    
-    return L.icon({
-        iconUrl: iconUrl,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40],
-        className: 'custom-marker-icon'
-    });
+    return L.icon({ iconUrl: obtenerIconoPorRubroYRegion(rubro, region), iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40], className: 'custom-marker-icon' });
 }
 
-// Actualizar marcadores en el mapa según filtros
 function actualizarMarcadores() {
     if (!map || !markersLayer) return;
-    
     markersLayer.clearLayers();
     
     emprendimientosFiltrados.forEach((emprendimiento, index) => {
         const coords = parsearCoordenadas(emprendimiento['Ubicación (formato: -23.5772, -65.3969 latitud,longitud)']);
-        
         if (coords) {
-            const marker = L.marker(coords, {
-                icon: crearIconoPersonalizado(emprendimiento.Rubro, emprendimiento.Región)
-            });
+            const marker = L.marker(coords, { icon: crearIconoPersonalizado(emprendimiento.Rubro, emprendimiento.Región) });
             
             let imagenUrl = PLACEHOLDER_IMAGE;
             if (emprendimiento.Imagen && emprendimiento.Imagen.trim()) {
                 const url = convertirGoogleDriveURL(emprendimiento.Imagen.trim());
-                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                    imagenUrl = url;
-                }
+                if (url && (url.startsWith('http://') || url.startsWith('https://'))) imagenUrl = url;
             }
             
             const nombrePopup = escapeHtml(emprendimiento.Emprendimiento || '');
@@ -1241,280 +880,134 @@ function actualizarMarcadores() {
             
             const popupContent = `
                 <div class="map-popup">
-                    <img src="${escapeHtml(imagenUrl)}" alt="${nombrePopup}" class="map-popup__image"
-                         onerror="this.src='${PLACEHOLDER_IMAGE.replace(/'/g, "\\'")}'">
+                    <img src="${escapeHtml(imagenUrl)}" alt="${nombrePopup}" class="map-popup__image" onerror="this.src='${PLACEHOLDER_IMAGE.replace(/'/g, "\\'")}'" >
                     <h4 class="map-popup__title">${nombrePopup}</h4>
                     <div class="map-popup__tags">
                         ${emprendimiento.Región ? `<span class="map-popup__tag">${regionPopup}</span>` : ''}
                         ${emprendimiento.Rubro ? `<span class="map-popup__tag">${rubroPopup}</span>` : ''}
                     </div>
-                    <button class="map-popup__btn" onclick="window.abrirModalDesdeIndex(${index})">
-                        ${escapeHtml(i18n.t('modal.viewDetails'))}
-                    </button>
+                    <button class="map-popup__btn" onclick="window.abrirModalDesdeIndex(${index})">${escapeHtml(i18n.t('modal.viewDetails'))}</button>
                 </div>
             `;
             
-            marker.bindPopup(popupContent, {
-                maxWidth: 250,
-                className: 'custom-popup'
-            });
-            
+            marker.bindPopup(popupContent, { maxWidth: 250, className: 'custom-popup' });
             markersLayer.addLayer(marker);
         }
     });
     
-    // Ajustar vista del mapa si hay marcadores
     if (markersLayer.getLayers().length > 0) {
-        map.fitBounds(markersLayer.getBounds(), {
-            padding: [50, 50],
-            maxZoom: 15
-        });
+        map.fitBounds(markersLayer.getBounds(), { padding: [50, 50], maxZoom: 15 });
     }
 }
 
-// Función global para abrir modal desde el mapa (por índice en emprendimientosFiltrados)
 window.abrirModalDesdeIndex = function(index) {
     const emprendimiento = emprendimientosFiltrados[parseInt(index, 10)];
-    if (emprendimiento) {
-        abrirModal(emprendimiento);
-    }
+    if (emprendimiento) abrirModal(emprendimiento);
 };
 
-// Cambiar entre vista grilla y mapa
 function cambiarVista(vista) {
     currentView = vista;
     
     if (vista === 'grid') {
-        // Mostrar grilla
         emprendimientosGrid.style.display = 'grid';
         mapView.style.display = 'none';
-        
-        // Mostrar controles superiores de paginación
-        if (paginationControls && emprendimientosFiltrados.length > 0) {
-            paginationControls.style.display = 'flex';
-        }
-        
-        // Mostrar controles inferiores si hay paginación activa
-        if (paginationControlsBottom && itemsPerPage !== 'all' && emprendimientosFiltrados.length > 0) {
-            paginationControlsBottom.style.display = 'flex';
-        }
-        
-        // Actualizar botones
+        if (paginationControls && emprendimientosFiltrados.length > 0) paginationControls.style.display = 'flex';
+        if (paginationControlsBottom && itemsPerPage !== 'all' && emprendimientosFiltrados.length > 0) paginationControlsBottom.style.display = 'flex';
         gridViewBtn.classList.add('view-toggle__btn--active');
         mapViewBtn.classList.remove('view-toggle__btn--active');
     } else {
-        // Mostrar mapa
         emprendimientosGrid.style.display = 'none';
         mapView.style.display = 'block';
-        
-        // Ocultar controles superiores de paginación en vista mapa
-        if (paginationControls) {
-            paginationControls.style.display = 'none';
-        }
-        
-        // Ocultar controles inferiores en vista mapa
-        if (paginationControlsBottom) {
-            paginationControlsBottom.style.display = 'none';
-        }
-        
-        // Actualizar botones
+        if (paginationControls) paginationControls.style.display = 'none';
+        if (paginationControlsBottom) paginationControlsBottom.style.display = 'none';
         gridViewBtn.classList.remove('view-toggle__btn--active');
         mapViewBtn.classList.add('view-toggle__btn--active');
         
-        // Inicializar el mapa la primera vez que se muestra
         if (!map) {
-            // Asegurar que el contenedor ya esté visible
-mapView.style.display = 'block';
-
-// Forzar reflow real del navegador
-const container = document.getElementById('map');
-container.style.height = '600px';
-container.style.width = '100%';
-container.offsetHeight; // ← línea CRÍTICA
-
-// Inicializar el mapa cuando el layout ya existe
-inicializarMapa();
-
-// Invalidar tamaño una sola vez (suficiente)
-setTimeout(() => {
-    map.invalidateSize();
-}, 50);
-
-
+            mapView.style.display = 'block';
+            const container = document.getElementById('map');
+            container.style.height = '600px';
+            container.style.width = '100%';
+            container.offsetHeight;
+            inicializarMapa();
+            setTimeout(() => { map.invalidateSize(); }, 50);
         } else {
-            // Refrescar el mapa si ya existe
             setTimeout(() => {
                 map.invalidateSize();
                 if (markersLayer && markersLayer.getLayers().length > 0) {
-                    map.fitBounds(markersLayer.getBounds(), {
-                        padding: [50, 50],
-                        maxZoom: 15
-                    });
+                    map.fitBounds(markersLayer.getBounds(), { padding: [50, 50], maxZoom: 15 });
                 }
             }, 100);
         }
     }
 }
 
-// Event listeners para el toggle de vistas
-if (gridViewBtn) {
-    gridViewBtn.addEventListener('click', () => cambiarVista('grid'));
-}
-
-if (mapViewBtn) {
-    mapViewBtn.addEventListener('click', () => cambiarVista('map'));
-}
+if (gridViewBtn) gridViewBtn.addEventListener('click', () => cambiarVista('grid'));
+if (mapViewBtn) mapViewBtn.addEventListener('click', () => cambiarVista('map'));
 
 // ============================================
-// EVENT LISTENERS PARA PAGINACIÓN
+// EVENT LISTENERS PAGINACIÓN
 // ============================================
 
-// Selector de items por página
-if (itemsPerPageSelect) {
-    itemsPerPageSelect.addEventListener('change', (e) => {
-        cambiarItemsPorPagina(e.target.value);
-    });
-}
-
-// Botón primera página
-if (firstPageBtn) {
-    firstPageBtn.addEventListener('click', () => {
-        irAPagina(1);
-    });
-}
-
-// Botón página anterior
-if (prevPageBtn) {
-    prevPageBtn.addEventListener('click', () => {
-        irAPagina(currentPage - 1);
-    });
-}
-
-// Botón página siguiente
-if (nextPageBtn) {
-    nextPageBtn.addEventListener('click', () => {
-        irAPagina(currentPage + 1);
-    });
-}
-
-// Botón última página
-if (lastPageBtn) {
-    lastPageBtn.addEventListener('click', () => {
-        const totalPages = calcularTotalPaginas();
-        irAPagina(totalPages);
-    });
-}
+if (itemsPerPageSelect) itemsPerPageSelect.addEventListener('change', (e) => cambiarItemsPorPagina(e.target.value));
+if (firstPageBtn) firstPageBtn.addEventListener('click', () => irAPagina(1));
+if (prevPageBtn) prevPageBtn.addEventListener('click', () => irAPagina(currentPage - 1));
+if (nextPageBtn) nextPageBtn.addEventListener('click', () => irAPagina(currentPage + 1));
+if (lastPageBtn) lastPageBtn.addEventListener('click', () => irAPagina(calcularTotalPaginas()));
+if (firstPageBtnBottom) firstPageBtnBottom.addEventListener('click', () => irAPagina(1));
+if (prevPageBtnBottom) prevPageBtnBottom.addEventListener('click', () => irAPagina(currentPage - 1));
+if (nextPageBtnBottom) nextPageBtnBottom.addEventListener('click', () => irAPagina(currentPage + 1));
+if (lastPageBtnBottom) lastPageBtnBottom.addEventListener('click', () => irAPagina(calcularTotalPaginas()));
 
 // ============================================
-// EVENT LISTENERS PARA PAGINACIÓN INFERIOR
+// INICIALIZACIÓN PAGINACIÓN
 // ============================================
 
-// Botón primera página (inferior)
-if (firstPageBtnBottom) {
-    firstPageBtnBottom.addEventListener('click', () => {
-        irAPagina(1);
-    });
-}
-
-// Botón página anterior (inferior)
-if (prevPageBtnBottom) {
-    prevPageBtnBottom.addEventListener('click', () => {
-        irAPagina(currentPage - 1);
-    });
-}
-
-// Botón página siguiente (inferior)
-if (nextPageBtnBottom) {
-    nextPageBtnBottom.addEventListener('click', () => {
-        irAPagina(currentPage + 1);
-    });
-}
-
-// Botón última página (inferior)
-if (lastPageBtnBottom) {
-    lastPageBtnBottom.addEventListener('click', () => {
-        const totalPages = calcularTotalPaginas();
-        irAPagina(totalPages);
-    });
-}
-
-// ============================================
-// INICIALIZACIÓN
-// ============================================
-
-// Inicializar controles de paginación al cargar
 if (paginationControls) {
-    // Mostrar el control principal
     paginationControls.style.display = 'flex';
-    
-    // Ocultar inicialmente los botones hasta que se carguen datos
     const centerControls = paginationControls.querySelector('.pagination-controls__center');
     const rightControls = paginationControls.querySelector('.pagination-controls__right');
-    
     if (centerControls) centerControls.style.display = 'none';
     if (rightControls) rightControls.style.display = 'none';
 }
 
 // ============================================
-// LAZY LOADING DE IMÁGENES
+// LAZY LOADING
 // ============================================
 
 function initLazyLoading() {
     const lazyImages = document.querySelectorAll('img.lazy-load');
     
-    // Si el navegador soporta IntersectionObserver
     if ('IntersectionObserver' in window) {
         const imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const img = entry.target;
                     const realSrc = img.getAttribute('data-src');
-                    
                     if (realSrc) {
-                        // Crear nueva imagen para precargar
                         const tempImg = new Image();
-                        
-                        tempImg.onload = () => {
-                            img.src = realSrc;
-                            img.classList.add('loaded');
-                        };
-                        
-                        tempImg.onerror = () => {
-                            img.src = PLACEHOLDER_IMAGE;
-                            img.classList.add('loaded');
-                        };
-                        
+                        tempImg.onload = () => { img.src = realSrc; img.classList.add('loaded'); };
+                        tempImg.onerror = () => { img.src = PLACEHOLDER_IMAGE; img.classList.add('loaded'); };
                         tempImg.src = realSrc;
                     }
-                    
                     observer.unobserve(img);
                 }
             });
-        }, {
-            rootMargin: '50px' // Empezar a cargar 50px antes de que entre en pantalla
-        });
+        }, { rootMargin: '50px' });
         
         lazyImages.forEach(img => imageObserver.observe(img));
     } else {
-        // Fallback para navegadores viejos - cargar todas
         lazyImages.forEach(img => {
             const realSrc = img.getAttribute('data-src');
-            if (realSrc) {
-                img.src = realSrc;
-            }
+            if (realSrc) img.src = realSrc;
         });
     }
 }
 
-// Llamar lazy loading cada vez que se renderizan emprendimientos
 const renderizarEmprendimientosOriginal = renderizarEmprendimientos;
 renderizarEmprendimientos = function() {
     renderizarEmprendimientosOriginal();
-    
-    // Esperar un tick para que el DOM se actualice
-    setTimeout(() => {
-        initLazyLoading();
-    }, 0);
+    setTimeout(() => { initLazyLoading(); }, 0);
 };
 
 // ============================================
@@ -1523,7 +1016,6 @@ renderizarEmprendimientos = function() {
 
 class AyniAssistant {
     constructor() {
-        // Elementos del DOM
         this.button = document.getElementById('ayniButton');
         this.chat = document.getElementById('ayniChat');
         this.closeBtn = document.getElementById('ayniClose');
@@ -1533,47 +1025,35 @@ class AyniAssistant {
         this.badge = document.getElementById('ayniBadge');
         this.suggestionsContainer = document.getElementById('ayniSuggestions');
         
-        // Estado
         this.isOpen = false;
         this.isTyping = false;
         this.messageQueue = [];
+        this.conversationHistory = [];
         
-        // Bind methods
         this.toggle = this.toggle.bind(this);
         this.close = this.close.bind(this);
         this.handleSend = this.handleSend.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
         this.handleSuggestion = this.handleSuggestion.bind(this);
         
-        // Inicializar
         this.init();
     }
     
     init() {
-        // Event listeners
         this.button.addEventListener('click', this.toggle);
         this.closeBtn.addEventListener('click', this.close);
         this.sendBtn.addEventListener('click', this.handleSend);
         this.input.addEventListener('keypress', this.handleKeyPress);
         
-        // Sugerencias rápidas
         const suggestions = this.suggestionsContainer.querySelectorAll('.ayni-assistant__suggestion');
-        suggestions.forEach(suggestion => {
-            suggestion.addEventListener('click', this.handleSuggestion);
-        });
+        suggestions.forEach(suggestion => suggestion.addEventListener('click', this.handleSuggestion));
         
-        // Mostrar badge inicial después de 3 segundos
-        setTimeout(() => {
-            this.showBadge(1);
-        }, 3000);
+        setTimeout(() => { this.showBadge(1); }, 3000);
     }
     
     toggle() {
-        if (this.isOpen) {
-            this.close();
-        } else {
-            this.open();
-        }
+        if (this.isOpen) this.close();
+        else this.open();
     }
     
     open() {
@@ -1581,16 +1061,8 @@ class AyniAssistant {
         this.chat.classList.add('active');
         this.button.classList.add('active');
         this.hideBadge();
-        
-        // Focus en el input
-        setTimeout(() => {
-            this.input.focus();
-        }, 300);
-        
-        // Animación del botón
-        setTimeout(() => {
-            this.button.classList.remove('active');
-        }, 500);
+        setTimeout(() => { this.input.focus(); }, 300);
+        setTimeout(() => { this.button.classList.remove('active'); }, 500);
     }
     
     close() {
@@ -1616,7 +1088,6 @@ class AyniAssistant {
     handleSuggestion(e) {
         const messageKey = e.currentTarget.getAttribute('data-message-key');
         if (messageKey) {
-            // Obtener el mensaje traducido de las sugerencias
             const ayniT = i18n.getAyniTranslations();
             const message = ayniT.suggestions?.[messageKey] || messageKey;
             this.sendMessage(message);
@@ -1624,56 +1095,88 @@ class AyniAssistant {
         }
     }
     
-    sendMessage(text) {
-        // Agregar mensaje del usuario
+    async sendMessage(text) {
         this.addMessage(text, 'user');
-        
-        // Ocultar sugerencias después del primer mensaje
         this.hideSuggestions();
-        
-        // Simular respuesta de Ayni
         this.showTyping();
-        
-        // Respuesta simulada basada en el mensaje
-        setTimeout(() => {
-            const response = this.generateResponse(text);
+        this.conversationHistory.push({ role: 'user', content: text });
+
+        try {
+            const response = await fetch('https://ayni-worker.pcruzf1988.workers.dev', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: this.conversationHistory }),
+            });
+
+            const data = await response.json();
+            const assistantText = data.content?.[0]?.text || 
+                'No pude obtener una respuesta en este momento. Intentá de nuevo 🙏';
+
+            this.conversationHistory.push({ role: 'assistant', content: assistantText });
             this.hideTyping();
-            this.addMessage(response, 'assistant');
-        }, 1500 + Math.random() * 1000);
+            this.addMessage(assistantText, 'assistant');
+
+        } catch (error) {
+            this.hideTyping();
+            this.addMessage('Tuve un problema de conexión. Por favor, intentá de nuevo en un momento 🙏', 'assistant');
+        }
     }
     
     addMessage(text, type) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `ayni-assistant__message ayni-assistant__message--${type}`;
-        
-        const avatar = type === 'assistant' ? `
-            <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__message-avatar">
-        ` : '';
-        
-        const time = new Date().toLocaleTimeString('es-AR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        
-        messageDiv.innerHTML = `
-            ${avatar}
-            <div>
-                <div class="ayni-assistant__message-bubble">${this.escapeHtml(text)}</div>
-                <div class="ayni-assistant__message-time">${time}</div>
-            </div>
-        `;
-        
+
+        const time = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ayni-assistant__message-bubble';
+        bubble.innerHTML = this.renderMarkdown(text);
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'ayni-assistant__message-time';
+        timeEl.textContent = time;
+
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(timeEl);
+
+        if (type === 'assistant') {
+            const avatar = document.createElement('img');
+            avatar.src = './assets/Ayni.png';
+            avatar.alt = 'Ayni';
+            avatar.className = 'ayni-assistant__message-avatar';
+            messageDiv.appendChild(avatar);
+        }
+
+        messageDiv.appendChild(wrapper);
         this.messagesContainer.appendChild(messageDiv);
-        this.scrollToBottom();
+
+        if (type === 'user') {
+            this.scrollToBottom();
+        } else {
+            messageDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    renderMarkdown(text) {
+        const escaped = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        return escaped
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, 
+                '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:#8B2500;font-weight:600;text-decoration:underline;">$1</a>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
     }
     
     showTyping() {
         this.isTyping = true;
-        
         const typingDiv = document.createElement('div');
         typingDiv.className = 'ayni-assistant__typing';
         typingDiv.id = 'ayniTyping';
-        
         typingDiv.innerHTML = `
             <img src="./assets/Ayni.png" alt="Ayni" class="ayni-assistant__message-avatar">
             <div class="ayni-assistant__typing-bubble">
@@ -1682,7 +1185,6 @@ class AyniAssistant {
                 <div class="ayni-assistant__typing-dot"></div>
             </div>
         `;
-        
         this.messagesContainer.appendChild(typingDiv);
         this.scrollToBottom();
     }
@@ -1690,90 +1192,15 @@ class AyniAssistant {
     hideTyping() {
         this.isTyping = false;
         const typingDiv = document.getElementById('ayniTyping');
-        if (typingDiv) {
-            typingDiv.remove();
-        }
-    }
-    
-    generateResponse(message) {
-        const lowerMessage = message.toLowerCase();
-        const ayniT = i18n.getAyniTranslations();
-        
-        // Obtener keywords y respuestas del idioma actual
-        const keywords = ayniT.keywords || {};
-        const responses = ayniT.responses || {};
-        
-        // Función helper para verificar keywords
-        const matchesKeywords = (keywordArray) => {
-            return keywordArray && keywordArray.some(keyword => 
-                lowerMessage.includes(keyword.toLowerCase())
-            );
-        };
-        
-        // Verificar cada categoría de keywords
-        if (matchesKeywords(keywords.quebrada)) {
-            return responses.quebrada || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.alojamiento)) {
-            return responses.alojamiento || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.artesania)) {
-            return responses.artesania || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.gastronomia)) {
-            return responses.gastronomia || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.puna)) {
-            return responses.puna || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.yungas)) {
-            return responses.yungas || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.mapa)) {
-            return responses.mapa || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.filtro)) {
-            return responses.filtro || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.gracias)) {
-            return responses.gracias || responses.default;
-        }
-        
-        if (matchesKeywords(keywords.hola)) {
-            return responses.hola || responses.default;
-        }
-        
-        // Respuesta por defecto
-        return responses.default || 'How can I help you?';
+        if (typingDiv) typingDiv.remove();
     }
     
     updateLanguage() {
-        // Este método se llama cuando cambia el idioma
-        // Actualiza el mensaje de bienvenida si la ventana está abierta
         const welcomeText = document.querySelector('.ayni-assistant__welcome-text');
         if (welcomeText) {
             const ayniT = i18n.getAyniTranslations();
             welcomeText.innerHTML = ayniT.welcome || '';
         }
-    }
-    
-    escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, m => map[m]);
     }
     
     scrollToBottom() {
@@ -1794,14 +1221,12 @@ class AyniAssistant {
     }
 }
 
-// Inicializar i18n, cargar datos y Ayni cuando el DOM esté listo
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // Inicializar sistema de internacionalización
     await i18n.init();
-
-    // Cargar datos después de que i18n esté listo (garantiza textos traducidos desde el inicio)
     await cargarDatos();
-
-    // Inicializar asistente Ayni
     window.ayniAssistant = new AyniAssistant();
 });
