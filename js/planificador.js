@@ -2061,6 +2061,13 @@ plannerEl.addEventListener('click', e => {
   }
 });
 
+// ─ Botón "Ver mapa" (solo mobile) — cierra el sidebar ─
+document.getElementById('sidebarMapBtn')?.addEventListener('click', () => {
+  sidebarEl.classList.remove('open');
+  plannerEl.classList.remove('sidebar-open');
+  mobileToggle.setAttribute('aria-expanded', 'false');
+});
+
 // ═══════════════════════════════════════════════════════════
 // DRAG & DROP — REORDENAR DÍAS Y PARADAS
 // ═══════════════════════════════════════════════════════════

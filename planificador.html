@@ -17,7 +17,7 @@
         rel="stylesheet">
     <link rel="preconnect" href="https://maps.googleapis.com">
 
-    <link rel="stylesheet" href="./css/planificador.css?v=2.1">
+    <link rel="stylesheet" href="./css/planificador.css">
 
     <!--
     ══════════════════════════════════════════════════
@@ -42,13 +42,22 @@
 
             <!-- ─── Header ─── -->
             <div class="sidebar-header">
-                <a href="./index.html" class="back-link" aria-label="Volver al sitio principal">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        aria-hidden="true">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    <span>Volver al sitio</span>
-                </a>
+                <div class="sidebar-header__top">
+                    <a href="./index.html" class="back-link" aria-label="Volver al sitio principal">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            aria-hidden="true">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                        <span>Volver al sitio</span>
+                    </a>
+                    <button class="sidebar-map-btn" id="sidebarMapBtn" aria-label="Ver mapa">
+                        <span>Ver mapa</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                            aria-hidden="true">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
 
                 <!-- Itinerary Switcher -->
                 <div class="itinerary-switcher" id="itinerarySwitcher">
@@ -256,7 +265,7 @@
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
     <!-- JS propio primero -->
-    <script src="./js/planificador.js?v=2.1"></script>
+    <script src="./js/planificador.js"></script>
 
     <!-- Google Maps se carga después, llama a initPlannerMap cuando está listo -->
     <script>
