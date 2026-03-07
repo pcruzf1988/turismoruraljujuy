@@ -374,10 +374,18 @@ function setActiveDay(dayId) {
   refreshActiveDayUI();
 }
 
-function toggleCollapse(itineraryId, dayId) {
+/**
+ * @param {string}  itineraryId
+ * @param {string}  dayId
+ * @param {boolean} [force] - si se pasa, fuerza ese valor en vez de invertir
+ */
+function toggleCollapse(itineraryId, dayId, force) {
   const it  = state.itineraries.find(i => i.id === itineraryId);
   const day = it?.days.find(d => d.id === dayId);
-  if (day) { day.collapsed = !day.collapsed; saveState(); }
+  if (day) {
+    day.collapsed = force !== undefined ? force : !day.collapsed;
+    saveState();
+  }
 }
 
 /**
@@ -969,9 +977,23 @@ function buildDayCard(it, day, index) {
 
   function handleHeaderClick(e) {
     if (e.target.closest('[data-action="del-day"]')) return;
+
+    const willOpen = card.classList.contains('collapsed');
+
+    // Acordeón: si se va a abrir esta tarjeta, colapsar las demás
+    if (willOpen) {
+      document.querySelectorAll('#daysList .day-card:not(.collapsed)').forEach(sibling => {
+        if (sibling === card) return;
+        const sibDayId = sibling.dataset.dayId;
+        sibling.classList.add('collapsed');
+        sibling.querySelector('.day-card__header')?.setAttribute('aria-expanded', 'false');
+        toggleCollapse(it.id, sibDayId, true);
+      });
+    }
+
     // Set active day on click
     setActiveDay(day.id);
-    // Also toggle collapse
+    // Toggle collapse en esta tarjeta
     toggleCollapse(it.id, day.id);
     card.classList.toggle('collapsed');
     header.setAttribute('aria-expanded', !card.classList.contains('collapsed') ? 'true' : 'false');
@@ -1951,11 +1973,21 @@ document.getElementById('addDayBtn').addEventListener('click', () => {
   const empty     = container.querySelector('.days-empty');
   if (empty) empty.remove();
 
+  // Colapsar todas las tarjetas abiertas antes de agregar la nueva
+  container.querySelectorAll('.day-card:not(.collapsed)').forEach(existing => {
+    const sibDayId = existing.dataset.dayId;
+    existing.classList.add('collapsed');
+    existing.querySelector('.day-card__header')?.setAttribute('aria-expanded', 'false');
+    toggleCollapse(it.id, sibDayId, true);
+  });
+
   const idx  = it.days.length - 1;
   const card = buildDayCard(it, day, idx);
   container.appendChild(card);
   document.getElementById('addDayBtn').classList.remove('pulsing');
-  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+
+  // Scroll al nuevo día (CSS ya tiene scroll-behavior: smooth)
+  requestAnimationFrame(() => card.scrollIntoView({ block: 'nearest' }));
 
   refreshMeta();
   updateEndDate(it);

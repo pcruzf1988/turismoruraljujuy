@@ -387,16 +387,27 @@ input  { font-family: inherit; }
 
 .days-list {
   flex: 1;
+  min-height: 0;           /* fix crítico: sin esto flex ignora overflow-y */
   overflow-y: auto;
-  padding: 2px 10px 6px;
+  overflow-x: hidden;
+  padding: 4px 10px 8px;
   display: flex;
   flex-direction: column;
   gap: 7px;
+  scroll-behavior: smooth;
+  scroll-padding-top: 4px;
+  scroll-padding-bottom: 8px;
 }
 
-.days-list::-webkit-scrollbar { width: 4px; }
+.days-list::-webkit-scrollbar { width: 3px; }
 .days-list::-webkit-scrollbar-track { background: transparent; }
-.days-list::-webkit-scrollbar-thumb { background: rgba(255, 220, 170, 0.12); border-radius: 4px; }
+.days-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 220, 170, 0.15);
+  border-radius: 3px;
+}
+.days-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 220, 170, 0.28);
+}
 
 /* Empty state */
 .days-empty {
@@ -429,6 +440,9 @@ input  { font-family: inherit; }
   position: relative;
   animation: slideIn 0.3s ease forwards;
   transition: border-color var(--t), box-shadow var(--t);
+  scroll-margin-top: 4px;
+  scroll-margin-bottom: 8px;
+  flex-shrink: 0;  /* evita que las tarjetas se compriman */
 }
 
 /* Active day highlight */
@@ -521,10 +535,17 @@ input  { font-family: inherit; }
 .day-card__chevron {
   color: var(--text-dim);
   flex-shrink: 0;
-  transition: transform var(--t);
+  transition: transform var(--t-smooth);
 }
 
 .day-card.collapsed .day-card__chevron { transform: rotate(-90deg); }
+
+/* Cursor indica que el header es interactivo */
+.day-card__header:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--r);
+}
 
 .day-card__delete-btn {
   width: 26px; height: 26px;
@@ -547,13 +568,28 @@ input  { font-family: inherit; }
 .day-card__body {
   display: grid;
   grid-template-rows: 1fr;
-  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.day-card.collapsed .day-card__body { grid-template-rows: 0fr; }
+.day-card.collapsed .day-card__body {
+  grid-template-rows: 0fr;
+}
 
 /* Wrapper interno necesario para que overflow:hidden no corte la animación */
-.day-card__body-inner { overflow: hidden; }
+.day-card__body-inner {
+  overflow: hidden;
+  /* pequeño fade al colapsar */
+  transition: opacity 0.2s ease;
+}
+
+.day-card.collapsed .day-card__body-inner {
+  opacity: 0;
+}
+
+.day-card:not(.collapsed) .day-card__body-inner {
+  opacity: 1;
+  transition-delay: 0.05s;
+}
 
 /* ─── Stops ─── */
 
