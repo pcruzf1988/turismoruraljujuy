@@ -145,6 +145,46 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5g
 // Columna exacta de coordenadas en el Google Sheet
 const CSV_COORDS_COL = 'Ubicación (formato: -23.5772, -65.3969 latitud,longitud)';
 
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23DEB887%22%2F%3E%3C%2Fsvg%3E";
+
+/**
+ * Convierte una URL de Google Drive al formato de thumbnail directo.
+ * Idéntico al helper de script.js — fuente única de verdad para el mapa.
+ */
+function convertirGoogleDriveURL(url) {
+  if (!url || !url.includes('drive.google.com')) return url;
+  let fileId = null;
+  let match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+  if (match) fileId = match[1];
+  if (!fileId) { match = url.match(/\/d\/([a-zA-Z0-9-_]+)/); if (match) fileId = match[1]; }
+  if (!fileId) { match = url.match(/[?&]id=([a-zA-Z0-9-_]+)/); if (match) fileId = match[1]; }
+  if (fileId) return `https://drive.google.com/thumbnail?id=${fileId}&sz=w600`;
+  return url;
+}
+
+/**
+ * Devuelve la URL del ícono PNG según rubro y región —
+ * misma lógica que obtenerIconoPorRubroYRegion() en script.js.
+ */
+function obtenerIconoURL(rubro, region) {
+  const r = rubro  ? rubro.toLowerCase()  : '';
+  const g = region ? region.toLowerCase() : '';
+
+  let tipo = 'experiencia';
+  if      (r.includes('alojamiento') || r.includes('hospedaje')) tipo = 'alojamiento';
+  else if (r.includes('artesanía')   || r.includes('artesano'))  tipo = 'artesania';
+  else if (r.includes('caballo')     || r.includes('paseo'))     tipo = 'caballo';
+  else if (r.includes('gastronom')   || r.includes('comida'))    tipo = 'gastronomia';
+  else if (r.includes('guía')        || r.includes('guia'))      tipo = 'guia';
+
+  let color = 'bordo';
+  if      (g.includes('puna'))     color = 'amarillo';
+  else if (g.includes('yungas'))   color = 'verde';
+  else if (g.includes('quebrada')) color = 'bordo';
+
+  return `./assets/${tipo}-${color}.png`;
+}
+
 // Jujuy map defaults
 const MAP_CENTER = { lat: -23.08, lng: -65.50 };
 const MAP_ZOOM   = 8;
@@ -374,18 +414,10 @@ function setActiveDay(dayId) {
   refreshActiveDayUI();
 }
 
-/**
- * @param {string}  itineraryId
- * @param {string}  dayId
- * @param {boolean} [force] - si se pasa, fuerza ese valor en vez de invertir
- */
-function toggleCollapse(itineraryId, dayId, force) {
+function toggleCollapse(itineraryId, dayId) {
   const it  = state.itineraries.find(i => i.id === itineraryId);
   const day = it?.days.find(d => d.id === dayId);
-  if (day) {
-    day.collapsed = force !== undefined ? force : !day.collapsed;
-    saveState();
-  }
+  if (day) { day.collapsed = !day.collapsed; saveState(); }
 }
 
 /**
@@ -977,23 +1009,9 @@ function buildDayCard(it, day, index) {
 
   function handleHeaderClick(e) {
     if (e.target.closest('[data-action="del-day"]')) return;
-
-    const willOpen = card.classList.contains('collapsed');
-
-    // Acordeón: si se va a abrir esta tarjeta, colapsar las demás
-    if (willOpen) {
-      document.querySelectorAll('#daysList .day-card:not(.collapsed)').forEach(sibling => {
-        if (sibling === card) return;
-        const sibDayId = sibling.dataset.dayId;
-        sibling.classList.add('collapsed');
-        sibling.querySelector('.day-card__header')?.setAttribute('aria-expanded', 'false');
-        toggleCollapse(it.id, sibDayId, true);
-      });
-    }
-
     // Set active day on click
     setActiveDay(day.id);
-    // Toggle collapse en esta tarjeta
+    // Also toggle collapse
     toggleCollapse(it.id, day.id);
     card.classList.toggle('collapsed');
     header.setAttribute('aria-expanded', !card.classList.contains('collapsed') ? 'true' : 'false');
@@ -1244,22 +1262,31 @@ function placeEmprendimientoMarkers(rows) {
     const tel     = row['Teléfono( sin guiones ni espacios: 5493884123456)'] || row['Teléfono'] || row['Telefono'] || '';
     const email   = row['Correo electrónico'] || row['Email'] || row['Correo'] || '';
     const desc    = row['Descripción']    || row['Descripcion'] || '';
+    const imagen  = row['Imagen']         || '';
     const coords  = parsearCoordsGSheet(row[CSV_COORDS_COL] || '');
 
     if (!nombre || nombre.length < 3 || !coords) continue;
 
     const { lat, lng } = coords;
 
+    // Ícono personalizado por rubro y región — mismo criterio que el mapa Leaflet
+    const iconUrl = obtenerIconoURL(rubro, region);
     const marker = new google.maps.Marker({
       position: { lat, lng },
       title:    nombre,
-      // No asignamos map aquí — lo gestiona el clusterer
+      icon: {
+        url:        iconUrl,
+        scaledSize: new google.maps.Size(38, 38),
+        anchor:     new google.maps.Point(19, 38),
+        origin:     new google.maps.Point(0, 0),
+      },
     });
 
     const stopData = {
       name: nombre, type: 'emprendimiento',
       lat, lng, categoria: rubro, region,
       telefono: tel, email, descripcion: desc,
+      imagen,
     };
 
     marker.addListener('click', () => openInfoWindow(marker, stopData));
@@ -1297,46 +1324,48 @@ function openInfoWindow(marker, stopData) {
 
   const isEmp = stopData.type === 'emprendimiento';
 
-  let btnHTML = '';
-  if (alreadyAdded) {
-    btnHTML = `<button style="width:100%;padding:8px;background:#7A9E6F;color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:default">✓ Ya agregado</button>`;
-  } else if (dayLabel) {
-    btnHTML = `<button id="popupAddBtn" style="width:100%;padding:8px;background:#8B4513;color:#fff;border:none;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer">+ Agregar a ${esc(dayLabel)}</button>`;
-  } else {
-    btnHTML = `<p style="font-size:0.75rem;color:#888;text-align:center;margin:4px 0 0">Seleccioná un día en el panel para agregar</p>`;
+  // Resolver imagen
+  let imagenUrl = PLACEHOLDER_IMAGE;
+  if (stopData.imagen && stopData.imagen.trim()) {
+    const converted = convertirGoogleDriveURL(stopData.imagen.trim());
+    if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
+      imagenUrl = converted;
+    }
   }
 
-  // Construir links de contacto clicables
-  const tel    = stopData.telefono || '';
-  const email  = stopData.email    || '';
-  const waLink = buildWaLink(tel);
+  // Botón de acción
+  let btnHTML = '';
+  if (alreadyAdded) {
+    btnHTML = `<button class="map-popup__add-btn added" disabled>✓ Ya agregado</button>`;
+  } else if (dayLabel) {
+    btnHTML = `<button class="map-popup__add-btn" id="popupAddBtn">+ Agregar a ${esc(dayLabel)}</button>`;
+  } else {
+    btnHTML = `<p class="map-popup__no-day">Seleccioná un día en el panel para agregar</p>`;
+  }
 
-  const contactHTML = (tel || email) ? `
-    <div style="display:flex;gap:5px;margin:8px 0 4px;flex-wrap:wrap">
-      ${waLink
-        ? `<a href="${waLink}" target="_blank" rel="noopener"
-            style="display:inline-flex;align-items:center;gap:4px;background:#25D366;color:#fff;
-                   text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            WhatsApp</a>`
-        : (tel ? `<a href="tel:${esc(tel)}" style="display:inline-flex;align-items:center;gap:4px;background:#eee;color:#333;text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">📞 ${esc(tel)}</a>` : '')}
-      ${email ? `<a href="mailto:${esc(email)}" style="display:inline-flex;align-items:center;gap:4px;background:#eee;color:#333;text-decoration:none;border-radius:20px;padding:4px 10px;font-size:0.72rem;font-weight:600">✉️ Email</a>` : ''}
-    </div>` : '';
+  // Sub-línea: rubro · región
+  const subParts = [stopData.categoria, stopData.region].filter(Boolean);
+  const subLine  = subParts.length ? `<p class="map-popup__sub">${esc(subParts.join(' · '))}</p>` : '';
 
   const content = `
-    <div style="font-family:'DM Sans',sans-serif;min-width:210px;max-width:270px;padding:4px">
-      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
-                  color:${isEmp ? '#8B3A0F' : '#2E6A80'};margin-bottom:5px">
-        ${isEmp ? '⭐ Emprendimiento' : '📍 Lugar'}
+    <div class="map-popup">
+      <img
+        class="map-popup__image"
+        src="${esc(imagenUrl)}"
+        alt="${esc(stopData.name)}"
+        onerror="this.src='${PLACEHOLDER_IMAGE}'"
+      >
+      <div class="map-popup__header">
+        <span class="map-popup__tag ${isEmp ? 'tag-emprendimiento' : 'tag-place'}">
+          ${isEmp ? '⭐ Emprendimiento' : '📍 Lugar'}
+        </span>
+        <p class="map-popup__name">${esc(stopData.name)}</p>
+        ${subLine}
       </div>
-      <div style="font-size:0.95rem;font-weight:700;color:#2D1205;line-height:1.3;margin-bottom:3px">
-        ${esc(stopData.name)}
+      <div class="map-popup__body">
+        ${stopData.descripcion ? `<p class="map-popup__desc">${esc(stopData.descripcion)}</p>` : ''}
+        ${btnHTML}
       </div>
-      ${stopData.categoria ? `<div style="font-size:0.72rem;color:#A0522D;margin-bottom:1px">${esc(stopData.categoria)}</div>` : ''}
-      ${stopData.region    ? `<div style="font-size:0.68rem;color:#aaa">📍 ${esc(stopData.region)}</div>` : ''}
-      ${stopData.descripcion ? `<p style="font-size:0.76rem;color:#555;line-height:1.55;margin:7px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(stopData.descripcion)}</p>` : ''}
-      ${contactHTML}
-      <div style="margin-top:10px">${btnHTML}</div>
     </div>`;
 
   infoWindow.setContent(content);
@@ -1358,9 +1387,9 @@ function openInfoWindow(marker, stopData) {
       if (card) refreshDayBadge(card, it.id, activeDay.id);
       refreshMeta();
 
-      btn.style.background = '#7A9E6F';
-      btn.textContent      = '✓ Agregado';
-      btn.disabled         = true;
+      btn.classList.add('added');
+      btn.textContent = '✓ Agregado';
+      btn.disabled    = true;
 
       const idx = it.days.findIndex(d => d.id === activeDay.id);
       showToast(`${stopData.name} agregado al Día ${idx + 1}`, 'success');
@@ -1973,21 +2002,11 @@ document.getElementById('addDayBtn').addEventListener('click', () => {
   const empty     = container.querySelector('.days-empty');
   if (empty) empty.remove();
 
-  // Colapsar todas las tarjetas abiertas antes de agregar la nueva
-  container.querySelectorAll('.day-card:not(.collapsed)').forEach(existing => {
-    const sibDayId = existing.dataset.dayId;
-    existing.classList.add('collapsed');
-    existing.querySelector('.day-card__header')?.setAttribute('aria-expanded', 'false');
-    toggleCollapse(it.id, sibDayId, true);
-  });
-
   const idx  = it.days.length - 1;
   const card = buildDayCard(it, day, idx);
   container.appendChild(card);
   document.getElementById('addDayBtn').classList.remove('pulsing');
-
-  // Scroll al nuevo día (CSS ya tiene scroll-behavior: smooth)
-  requestAnimationFrame(() => card.scrollIntoView({ block: 'nearest' }));
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 
   refreshMeta();
   updateEndDate(it);
