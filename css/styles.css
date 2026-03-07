@@ -977,7 +977,7 @@ body {
 }
 .hero__title-highlight {
   display: inline-block;
-  color: #CD853F;
+  color: #ffcba6;
   position: relative;
 }
 .hero__title-highlight::after {
