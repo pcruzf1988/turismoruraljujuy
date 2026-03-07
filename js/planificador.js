@@ -1136,11 +1136,13 @@ function openSwitcherDropdown()  {
   switcherDropdown.style.width = rect.width + 'px';
   switcherDropdown.classList.add('open');
   switcherTrigger.setAttribute('aria-expanded', 'true');
+  document.getElementById('sidebar').classList.add('switcher-open');
 }
 
 function closeSwitcherDropdown() {
   switcherDropdown.classList.remove('open');
   switcherTrigger.setAttribute('aria-expanded', 'false');
+  document.getElementById('sidebar').classList.remove('switcher-open');
 }
 
 switcherTrigger.addEventListener('click', e => {
@@ -1296,9 +1298,30 @@ function placeEmprendimientoMarkers(rows) {
 
   // Usar MarkerClusterer si está disponible, si no, añadir markers directamente al mapa
   if (window.markerClusterer?.MarkerClusterer) {
+    const brownRenderer = {
+      render({ count, position }) {
+        const size = count >= 20 ? 52 : count >= 5 ? 44 : 36;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+          <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 2}" fill="#8B4513" stroke="#fff" stroke-width="2" opacity="0.92"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+            font-family="DM Sans,sans-serif" font-size="${size < 44 ? 12 : 13}" font-weight="700" fill="#fff">${count}</text>
+        </svg>`;
+        return new google.maps.Marker({
+          position,
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+            scaledSize: new google.maps.Size(size, size),
+            anchor: new google.maps.Point(size / 2, size / 2),
+          },
+          zIndex: 1000 + count,
+        });
+      }
+    };
+
     clustererInstance = new window.markerClusterer.MarkerClusterer({
-      map:     mapInstance,
-      markers: rawMarkers,
+      map:      mapInstance,
+      markers:  rawMarkers,
+      renderer: brownRenderer,
     });
   } else {
     // Fallback: sin clustering

@@ -193,6 +193,16 @@ input  { font-family: inherit; }
   transform: translateY(0);
 }
 
+.sidebar.switcher-open .itinerary-title-section,
+.sidebar.switcher-open .controls-bar,
+.sidebar.switcher-open .days-list,
+.sidebar.switcher-open .add-day-wrapper,
+.sidebar.switcher-open .sidebar-footer {
+  opacity: 0.25;
+  pointer-events: none;
+  transition: opacity var(--t-smooth);
+}
+
 .switcher-dropdown__list {
   max-height: 220px;
   overflow-y: auto;
