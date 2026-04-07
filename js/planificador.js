@@ -1566,7 +1566,7 @@ function buildItineraryHTML(it) {
 
   <!-- Header -->
   <div class="header">
-    <div class="header__logo">Turismo Rural Jujuy · Secretaría de Economía Popular</div>
+    <div class="header__logo">Turismo Rural Jujuy · Economía Popular de Jujuy</div>
     <h1 class="header__title">${esc(it.name)}</h1>
     <div class="header__meta">
       ${it.days.length} día${it.days.length !== 1 ? 's' : ''} · ${totalStops} parada${totalStops !== 1 ? 's' : ''} · Generado el ${now}
