@@ -1,1 +1,11 @@
+# Credenciales y configuración sensible
+config.js
 
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+*.swp
+*.swo

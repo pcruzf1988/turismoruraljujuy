@@ -1194,7 +1194,6 @@ window.initPlannerMap = function () {
     loadEmprendimientos();
 
   } catch (err) {
-    console.error('[Mapa] Error:', err);
     loadingEl.hidden  = true;
     errorEl.hidden    = false;
     const el = document.getElementById('mapErrorText');
@@ -1227,15 +1226,15 @@ async function loadEmprendimientos() {
     }
 
     const res  = await fetch(CSV_URL);
-    if (!res.ok) { console.warn('[CSV] No encontrado:', CSV_URL); return; }
+    if (!res.ok) { return; }
     const text = await res.text();
 
     // Guardar en cache para esta sesión
     try { sessionStorage.setItem(CSV_CACHE_KEY, text); } catch (_) { /* cuota excedida: ignorar */ }
 
     placeEmprendimientoMarkers(parseCSV(text));
-  } catch (err) {
-    console.warn('[CSV] Error al cargar:', err.message);
+  } catch (_) {
+    // Error silencioso al cargar CSV
   }
 }
 
@@ -1328,7 +1327,6 @@ function placeEmprendimientoMarkers(rows) {
     rawMarkers.forEach(m => m.setMap(mapInstance));
   }
 
-  console.log(`[Mapa] ${emprendimientoMarkers.length} emprendimientos cargados`);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1810,7 +1808,6 @@ function drawActiveRoute() {
       renderer.setDirections(result);
       showRouteDistances(result, stops, color);
     } else {
-      console.warn('[Ruta] DirectionsService:', status, '— usando línea recta');
       drawFallbackRoute(stops, color);
     }
   });
