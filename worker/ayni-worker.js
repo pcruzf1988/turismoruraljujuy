@@ -9,7 +9,11 @@
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJ2yQd6691oT5gGiVAH3mV0ItZZzhpIWCt7CXKbX6UqSpJy76teHK-o6hKeIYeu1p-I1NhFjNxvP0E/pub?gid=0&single=true&output=csv";
 
 const MODELO = 'claude-haiku-4-5-20251001';
-const MAX_TOKENS = 1024;
+
+// Una consulta amplia puede tener diez o mas emprendimientos que califican
+// (cabalgatas da 10 sobre 75). Con 1024 la lista se cortaba a la mitad.
+// Es un techo, no un objetivo: las respuestas cortas siguen costando poco.
+const MAX_TOKENS = 2048;
 
 // Cachear el CSV en el borde alinea el prefijo del prompt durante 5 minutos,
 // que es exactamente la ventana del prompt caching de Anthropic.
@@ -31,7 +35,24 @@ Tu misión es ayudar a viajeros y turistas a descubrir los emprendimientos de la
 CÓMO DEBÉS COMPORTARTE:
 - Hablás en español, con calidez, cercanía y respeto profundo por las comunidades y sus culturas.
 - Usás un tono que invita a descubrir Jujuy, sin exagerar ni ser artificial.
-- Sos concisa pero completa: no respondés con listas interminables si no es necesario.
+- Sos breve en CUÁNTO decís de cada emprendimiento, nunca en CUÁNTOS mencionás. Si diez cumplen con lo que te piden, van los diez. Dejar uno afuera es quitarle una oportunidad de trabajo a esa familia.
+- Cuando son varios, usá una línea por emprendimiento (nombre, comunidad y qué ofrece) y cerrá ofreciendo ampliar sobre el que le interese. Una lista de diez líneas es corta; diez párrafos no.
+- Si ya hiciste preguntas para afinar la búsqueda, igual mostrá todo lo que entra en el filtro final. Afinar sirve para ordenar por relevancia, no para recortar la lista.
+
+CÓMO BUSCAR POR ACTIVIDAD:
+
+Cada ficha trae dos campos distintos y no significan lo mismo:
+
+- "Rubro" es la categoría principal, UNA sola. Dice a qué se dedica el emprendimiento, no todo lo que ofrece.
+- "Actividades" es la lista completa de lo que ofrece, ya extraída de su descripción. Etiquetas posibles: cabalgatas, trekking, gastronomia, artesanias, alojamiento, agro, bicicleta, avistaje, talleres.
+
+Cuando te pregunten por una actividad, filtrá SIEMPRE por el campo "Actividades", nunca por "Rubro". Un emprendimiento con Rubro "Alojamiento" y Actividades "alojamiento, cabalgatas" ofrece cabalgatas y tiene que aparecer cuando alguien las busque.
+
+Si al terminar una búsqueda todos tus resultados comparten el mismo Rubro, filtraste por el campo equivocado: rehacé la búsqueda mirando "Actividades".
+
+Si una ficha dice "sin clasificar", significa que no se le detectaron etiquetas. Revisá su descripción a mano antes de descartarla.
+
+ANTES DE ENVIAR LA RESPUESTA, verificá: contá cuántas fichas tienen la etiqueta que te pidieron y asegurate de haberlas listado TODAS. Si contaste ocho y escribiste seis, faltan dos: volvé y agregalas. Este control no se saltea, ni siquiera cuando la lista te parece larga.
 - Cuando alguien pregunta por emprendimientos, los describís con entusiasmo genuino y ofrecés sus datos de contacto, aclarando que sean pacientes ya que en muchas comunidades no hay señal y a veces la respuesta puede demorar.
 - Si alguien tiene dudas sobre qué región o tipo de experiencia elegir, hacés preguntas amables para entender sus intereses y recomendás lo más adecuado.
 - Nunca inventás información. Si algo no está en los datos, lo decís con honestidad: "Lamentablemente, no tengo ese dato, te recomiendo contactar directamente al emprendimiento o al siguiente número de whatsapp +5492281655190" o "Esa información no la manejo aún".
@@ -110,6 +131,44 @@ function parseCSV(texto) {
     .filter(e => (e.Emprendimiento || '').trim() !== '');
 }
 
+/**
+ * El campo "Rubro" del Sheet guarda una sola categoria principal, asi que un
+ * alojamiento que ademas ofrece cabalgatas queda etiquetado solo como
+ * "Alojamiento". Pedirle al modelo que rastree eso leyendo las 75 descripciones
+ * no funciono: encontraba los 6 del rubro obvio y se perdia los 2 restantes.
+ *
+ * Asi que la deteccion se hace aca, de forma deterministica, y el modelo recibe
+ * el dato ya resuelto como un campo mas.
+ *
+ * Los patrones corren sobre texto normalizado (sin acentos, minusculas) y usan
+ * \b para no matchear dentro de otra palabra: sin eso, "formulas" matcheaba
+ * "mula" y "mula mula" (una hierba aromatica) entraba como cabalgata.
+ */
+function normalizar(t) {
+  return (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+const ACTIVIDADES = [
+  ['cabalgatas',   /\b(cabalgat\w*|caballos?|jinetes?|arreos?\s+de\s+animales)\b/],
+  ['trekking',     /\b(trekking|caminatas?|senderismo|senderos?|ascensos?|excursion\w*)\b/],
+  ['gastronomia',  /\b(gastronom\w*|almuerzos?|cenas?|degustacion\w*|comidas?\s+(?:tipicas|regionales|caseras)|cocina\s+\w+)\b/],
+  ['artesanias',   /\b(artesan\w*|telar\w*|tejidos?|ceramica|alfarer\w*|hilado\w*)\b/],
+  ['alojamiento',  /\b(alojamiento|hospedaje|cabanas?|camping|pernocte|habitaciones?)\b/],
+  ['agro',         /\b(siembra|cosecha|huerta|granja|apicultura|ordene|chacra)\b/],
+  ['bicicleta',    /\b(bicicletas?|bici|ciclismo|mountain\s*bike)\b/],
+  ['avistaje',     /\b(avistaje|avistamiento|observacion\s+de\s+aves)\b/],
+  ['talleres',     /\b(talleres?\s+de|aprender\w*\s+a)\b/],
+];
+
+function detectarActividades(e) {
+  const texto = normalizar([
+    e['Rubro'],
+    e['Descripción'],
+    e['Info / Atención / Condiciones de reserva'],
+  ].join(' \n '));
+  return ACTIVIDADES.filter(([, re]) => re.test(texto)).map(([nombre]) => nombre);
+}
+
 function formatDataForAyni(emprendimientos) {
   return emprendimientos.map(e => {
     const telefono  = e['Teléfono( sin guiones ni espacios: 5493884123456)'] || '';
@@ -125,10 +184,13 @@ function formatDataForAyni(emprendimientos) {
     if (facebook)  contacto.push(`Facebook: ${facebook}`);
     if (email)     contacto.push(`Email: ${email}`);
 
+    const actividades = detectarActividades(e);
+
     return `---
 EMPRENDIMIENTO: ${e.Emprendimiento || ''}
 Región: ${e.Región || ''}
 Rubro: ${e.Rubro || ''}
+Actividades: ${actividades.join(', ') || 'sin clasificar'}
 Comunidad: ${comunidad}
 Descripción: ${e.Descripción || ''}
 Info adicional: ${e['Info / Atención / Condiciones de reserva'] || ''}
@@ -321,6 +383,8 @@ export default {
         `cache_write=${u.cache_creation_input_tokens}`,
         `cache_read=${u.cache_read_input_tokens}`,
         `output=${u.output_tokens}`,
+        // Si aparece "max_tokens", la respuesta se corto: hay que subir MAX_TOKENS.
+        `stop=${data.stop_reason}`,
       );
 
       return json(data, 200, cors);
