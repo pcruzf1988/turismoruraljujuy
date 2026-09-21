@@ -1,0 +1,27 @@
+# Configuración del Worker de Ayni.
+#
+# IMPORTANTE: "name" tiene que coincidir exactamente con el worker que ya existe
+# en Cloudflare. Si se cambia, wrangler crea uno nuevo y la URL vieja queda
+# apuntando al worker viejo.
+#
+# La API key NO va en este archivo: es un secret y vive solo en Cloudflare.
+#   wrangler secret put ANTHROPIC_API_KEY
+
+name = "ayni-worker"
+main = "ayni-worker.js"
+compatibility_date = "2026-09-21"
+workers_dev = true
+
+# Límite por IP: frena a un atacante puntual sin molestar a un visitante real.
+# Una persona charlando manda ~1 mensaje cada 10-30 segundos.
+[[ratelimits]]
+name = "AYNI_LIMIT_IP"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
+# Límite global: techo total del endpoint, sin importar de dónde venga.
+# Acota el daño de un ataque distribuido entre varias IPs.
+[[ratelimits]]
+name = "AYNI_LIMIT_GLOBAL"
+namespace_id = "1002"
+simple = { limit = 30, period = 60 }

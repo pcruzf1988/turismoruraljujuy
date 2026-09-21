@@ -9,3 +9,8 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Cloudflare Wrangler
+.wrangler/
+worker/.wrangler/
+node_modules/
