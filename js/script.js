@@ -1250,5 +1250,5 @@ class AyniAssistant {
 document.addEventListener('DOMContentLoaded', async () => {
     await i18n.init();
     await cargarDatos();
-    // window.ayniAssistant = new AyniAssistant(); // Temporalmente desactivado
+    window.ayniAssistant = new AyniAssistant();
 });
