@@ -1,6 +1,3 @@
-# Credenciales y configuración sensible
-config.js
-
 # Sistema operativo
 .DS_Store
 Thumbs.db
@@ -10,7 +7,19 @@ Thumbs.db
 *.swp
 *.swo
 
+# Dependencias y artefactos de build
+node_modules/
+
 # Cloudflare Wrangler
 .wrangler/
 worker/.wrangler/
-node_modules/
+
+# NOTA sobre config.js
+# config.js SI se versiona. Contiene la API key de Google Maps, que es una
+# clave publica por diseno: viaja al navegador de cada visitante dentro de un
+# archivo JS, asi que nunca fue secreta. Lo que la protege es la restriccion
+# por HTTP referrer en Google Cloud Console, no el ocultamiento.
+#
+# NO poner secretos reales en config.js. Un secreto real (API key de servidor,
+# token, password) va en el worker de Cloudflare como secret, nunca en un
+# archivo que se sirve al navegador.

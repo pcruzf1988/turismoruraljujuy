@@ -1,0 +1,10 @@
+# Turismo Rural Jujuy — reglas del servidor (LiteSpeed lee sintaxis Apache).
+
+# El deploy por Git sube el repositorio completo, incluidas carpetas que no son
+# parte del sitio. Se responden como 404: un 403 confirmaria que existen.
+RedirectMatch 404 ^/(worker|sass|\.agents|\.git|\.wrangler|node_modules)(/|$)
+
+# Archivos ocultos y de configuracion que nunca deben servirse.
+RedirectMatch 404 /\.(DS_Store|gitignore|env|htaccess)$
+
+# config.js SI se sirve: el navegador lo necesita para cargar Google Maps.
