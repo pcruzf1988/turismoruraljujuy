@@ -1115,6 +1115,10 @@ class AyniAssistant {
                 body: JSON.stringify({ messages: this.conversationHistory }),
             });
 
+            if (response.status === 429) {
+                throw new Error('RATE_LIMIT');
+            }
+
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
@@ -1126,8 +1130,17 @@ class AyniAssistant {
             this.addMessage(assistantText, 'assistant');
 
         } catch (error) {
+            // El mensaje del usuario quedó sin respuesta: se saca del historial
+            // para que no queden dos turnos seguidos del mismo rol en el próximo envío.
+            this.conversationHistory.pop();
+
             this.hideTyping();
-            this.addMessage('Tuve un problema de conexión. Por favor, intentá de nuevo en un momento 🙏', 'assistant');
+            this.addMessage(
+                error.message === 'RATE_LIMIT'
+                    ? 'Estoy recibiendo muchas consultas en este momento. Esperá unos segundos y volvé a escribirme 🙏'
+                    : 'Tuve un problema de conexión. Por favor, intentá de nuevo en un momento 🙏',
+                'assistant',
+            );
         }
     }
     
